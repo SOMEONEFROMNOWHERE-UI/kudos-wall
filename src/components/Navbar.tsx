@@ -2,6 +2,7 @@
 
 import { useKudos } from '@/context/KudosContext';
 import { LogOut } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface NavbarProps {
   onOpenJar: () => void;
@@ -40,9 +41,24 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
         }}
       >
         {/* ── Logo ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
-          <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>✦</span>
-          <span
+        <motion.div 
+          whileHover="hover"
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0, cursor: 'default' }}
+        >
+          <motion.span 
+            variants={{
+              hover: { rotate: 180, scale: 1.2, color: 'var(--accent)' }
+            }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            style={{ fontSize: '1.25rem', lineHeight: 1 }}
+          >
+            ✦
+          </motion.span>
+          <motion.span
+            variants={{
+              hover: { textShadow: '0 0 16px rgba(232,184,75,0.4)', x: 4 }
+            }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             style={{
               fontSize: 'var(--text-title)',
               fontWeight: 700,
@@ -51,8 +67,8 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
             }}
           >
             Glow Up Wall
-          </span>
-        </div>
+          </motion.span>
+        </motion.div>
 
         {/* ── Center: Pulse counter — ambient, not prominent ── */}
         <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>

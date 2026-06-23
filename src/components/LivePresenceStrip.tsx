@@ -11,8 +11,9 @@ const AVATAR_COLORS = ['#E8B84B', '#6FCF97', '#56B4E8', '#A78BFA', '#FF6B4A', '#
 
 export default function LivePresenceStrip() {
   const { live, currentUser } = useKudos();
-  const others = live.presenceUsers.filter(u => u !== currentUser?.name);
-  const total = live.presenceUsers.length;
+  const uniqueUsers = Array.from(new Set(live.presenceUsers));
+  const others = uniqueUsers.filter(u => u !== currentUser?.name);
+  const total = uniqueUsers.length;
 
   if (total < 1) return null;
 
