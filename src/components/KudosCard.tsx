@@ -86,8 +86,8 @@ export default function KudosCard({ kudos, index }: KudosCardProps) {
 
   // Sync from live context
   useEffect(() => {
-    if (live.reactions[kudos._id]) {
-      setReactions(prev => ({ ...prev, ...live.reactions[kudos._id] }));
+    if (kudos._id && live.reactions[kudos._id]) {
+      setReactions(prev => ({ ...prev, ...live.reactions[kudos._id!] }));
     }
   }, [live.reactions, kudos._id]);
 
@@ -110,7 +110,7 @@ export default function KudosCard({ kudos, index }: KudosCardProps) {
       await fetch('/api/reactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kudosId: kudos._id, emoji, undo: isUndo }),
+        body: JSON.stringify({ kudosId: kudos._id!, emoji, undo: isUndo }),
       });
     } catch { /* optimistic, ignore errors */ }
   };

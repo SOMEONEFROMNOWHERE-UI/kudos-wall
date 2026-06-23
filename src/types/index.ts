@@ -13,6 +13,8 @@ export interface KudosData {
 export interface UserProfile {
   _id?: string;
   name: string;
+  email?: string;
+  image?: string;
   streak: number;
   lastKudosGiven: string | null;
   createdAt?: string;

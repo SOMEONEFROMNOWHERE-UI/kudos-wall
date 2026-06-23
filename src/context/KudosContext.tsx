@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import type { KudosData, UserProfile } from '@/types';
 
 interface LiveState {
@@ -15,8 +16,8 @@ interface KudosContextType {
   totalCount: number;
   isLoading: boolean;
   live: LiveState;
-  login: (name: string) => Promise<void>;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
   addKudos: (kudos: Omit<KudosData, '_id' | 'createdAt'>) => Promise<void>;
   refreshKudos: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -33,17 +34,33 @@ export const KudosProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const sseRef = useRef<EventSource | null>(null);
   const userRef = useRef<UserProfile | null>(null);
 
+  const { data: session, status } = useSession();
+
   // Keep ref in sync
   useEffect(() => { userRef.current = currentUser; }, [currentUser]);
 
-  // Restore user from localStorage
+  // Restore user from session
   useEffect(() => {
-    const saved = localStorage.getItem('kudoswall_user');
-    if (saved) {
-      try { setCurrentUser(JSON.parse(saved)); } catch { localStorage.removeItem('kudoswall_user'); }
+    if (status === 'loading') return;
+    if (session?.user?.name) {
+      fetch(`/api/users?name=${encodeURIComponent(session.user.name)}`)
+        .then(res => res.json())
+        .then(data => {
+          setCurrentUser({
+            _id: data._id,
+            name: session.user!.name!,
+            image: session.user!.image || undefined,
+            streak: data.streak,
+            lastKudosGiven: data.lastKudosGiven
+          });
+          setIsLoading(false);
+        })
+        .catch(() => setIsLoading(false));
+    } else {
+      setCurrentUser(null);
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  }, [session, status]);
 
   // Fetch kudos
   const refreshKudos = useCallback(async () => {
@@ -69,9 +86,14 @@ export const KudosProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const res = await fetch(`/api/users?name=${encodeURIComponent(u.name)}`);
       if (res.ok) {
         const data = await res.json();
-        const updated: UserProfile = { _id: data._id, name: data.name, streak: data.streak, lastKudosGiven: data.lastKudosGiven };
+        const updated: UserProfile = { 
+          _id: data._id, 
+          name: u.name,
+          image: u.image,
+          streak: data.streak, 
+          lastKudosGiven: data.lastKudosGiven 
+        };
         setCurrentUser(updated);
-        localStorage.setItem('kudoswall_user', JSON.stringify(updated));
       }
     } catch { /* ignore */ }
   }, []);
@@ -140,27 +162,15 @@ export const KudosProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => clearInterval(interval);
   }, [refreshKudos, refreshCount]);
 
-  const login = async (name: string) => {
-    const res = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim() }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const user: UserProfile = { _id: data._id, name: data.name, streak: data.streak, lastKudosGiven: data.lastKudosGiven };
-      setCurrentUser(user);
-      localStorage.setItem('kudoswall_user', JSON.stringify(user));
-    } else {
-      throw new Error('Login failed');
-    }
+  const login = async () => {
+    await signIn('google');
   };
 
-  const logout = () => {
+  const logout = async () => {
     sseRef.current?.close();
     sseRef.current = null;
     setCurrentUser(null);
-    localStorage.removeItem('kudoswall_user');
+    await signOut();
   };
 
   const addKudos = async (kudosData: Omit<KudosData, '_id' | 'createdAt'>) => {

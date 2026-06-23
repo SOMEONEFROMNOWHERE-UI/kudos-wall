@@ -94,13 +94,15 @@ export default function KudosFeed() {
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              style={{ fontSize: '3.5rem', marginBottom: 'var(--space-4)', position: 'relative', lineHeight: 1 }}
+              style={{ fontSize: '3.5rem', marginBottom: 'var(--space-4)', position: 'relative', zIndex: 1, lineHeight: 1 }}
             >
               ✦
             </motion.div>
             {/* ONE display-size line on the screen */}
             <h1
               style={{
+                position: 'relative',
+                zIndex: 1,
                 fontSize: 'var(--text-display)',
                 fontWeight: 700,
                 color: 'var(--text-primary)',
@@ -114,6 +116,8 @@ export default function KudosFeed() {
             </h1>
             <p
               style={{
+                position: 'relative',
+                zIndex: 1,
                 fontSize: 'var(--text-body)',
                 color: 'var(--text-secondary)',
                 maxWidth: 380,
@@ -129,7 +133,7 @@ export default function KudosFeed() {
               onClick={() => setIsModalOpen(true)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
-              style={{ padding: '13px 32px', fontSize: 'var(--text-body)', letterSpacing: '0.01em' }}
+              style={{ position: 'relative', zIndex: 1, padding: '13px 32px', fontSize: 'var(--text-body)', letterSpacing: '0.01em' }}
             >
               Send First Kudos →
             </motion.button>

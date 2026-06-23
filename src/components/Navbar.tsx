@@ -50,7 +50,7 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
               color: 'var(--text-primary)',
             }}
           >
-            Kudos Wall
+            Glow Up Wall
           </span>
         </div>
 
@@ -122,23 +122,37 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
                   background: 'var(--surface-raised)',
                 }}
               >
-                <div
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50%',
-                    background: 'var(--accent-muted)',
-                    border: '1px solid var(--accent-border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    color: 'var(--accent)',
-                  }}
-                >
-                  {getInitials(currentUser.name)}
-                </div>
+                {currentUser.image ? (
+                  <img
+                    src={currentUser.image}
+                    alt={currentUser.name}
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      border: '1px solid var(--surface-border)',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      background: 'var(--accent-muted)',
+                      border: '1px solid var(--accent-border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      color: 'var(--accent)',
+                    }}
+                  >
+                    {getInitials(currentUser.name)}
+                  </div>
+                )}
                 <span style={{ fontSize: 'var(--text-label)', color: 'var(--text-secondary)', fontWeight: 500 }}>
                   {currentUser.name}
                 </span>
