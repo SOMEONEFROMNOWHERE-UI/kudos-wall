@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useKudos } from '@/context/KudosContext';
 import type { KudosData } from '@/types';
 import { CATEGORIES } from '@/types';
+import { Pencil, Trash2, X, Check } from 'lucide-react';
 
 interface KudosCardProps {
   kudos: KudosData;
@@ -68,11 +69,17 @@ export default function KudosCard({ kudos, index }: KudosCardProps) {
   const category = CATEGORIES.find(c => c.icon === kudos.category) || CATEGORIES[0];
   const accentColor = CATEGORY_COLORS[kudos.category] || 'var(--cat-heart)';
 
-  const { live } = useKudos();
+  const { live, currentUser, updateKudos, deleteKudos } = useKudos();
 
   const [reactions, setReactions] = useState<Record<Reaction, number>>({ '🌟': 0, '🔥': 0, '🫂': 0 });
   const [myReactions, setMyReactions] = useState<Record<Reaction, boolean>>({ '🌟': false, '🔥': false, '🫂': false });
   const [animating, setAnimating] = useState<Reaction | null>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editMessage, setEditMessage] = useState(kudos.message);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOwner = currentUser?.name === kudos.sender && !kudos.isAnonymous;
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -161,23 +168,78 @@ export default function KudosCard({ kudos, index }: KudosCardProps) {
             {category.label}
           </span>
         </div>
-        <span className="text-label">{timeAgo(kudos.createdAt)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <span className="text-label">{timeAgo(kudos.createdAt)}</span>
+          {isOwner && !isEditing && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="btn-icon" 
+                style={{ width: 28, height: 28, border: 'none' }}
+              >
+                <Pencil size={14} />
+              </button>
+              <button 
+                onClick={async () => {
+                  if (confirm('Are you sure you want to delete this kudos?')) {
+                    setIsDeleting(true);
+                    try { await deleteKudos(kudos._id!); } 
+                    catch (e) { alert('Failed to delete'); setIsDeleting(false); }
+                  }
+                }}
+                disabled={isDeleting}
+                className="btn-icon" 
+                style={{ width: 28, height: 28, border: 'none', color: isDeleting ? 'var(--text-tertiary)' : 'var(--cat-fire)' }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Message */}
-      <p
-        style={{
-          fontSize: 'var(--text-body)',
-          color: 'var(--text-primary)',
-          lineHeight: 1.7,
-          marginBottom: 'var(--space-4)',
-          fontStyle: 'italic',
-          fontWeight: 400,
-          position: 'relative',
-        }}
-      >
-        &ldquo;{kudos.message}&rdquo;
-      </p>
+      {isEditing ? (
+        <div style={{ marginBottom: 'var(--space-4)' }}>
+          <textarea
+            className="input-field"
+            value={editMessage}
+            onChange={(e) => setEditMessage(e.target.value)}
+            style={{ minHeight: 80, fontSize: 'var(--text-body)', padding: 'var(--space-2)' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button onClick={() => { setIsEditing(false); setEditMessage(kudos.message); }} className="btn-ghost" style={{ minHeight: 32, padding: '4px 12px' }}>
+              <X size={14} /> Cancel
+            </button>
+            <button 
+              onClick={async () => {
+                if (!editMessage.trim()) return;
+                try {
+                  await updateKudos(kudos._id!, editMessage);
+                  setIsEditing(false);
+                } catch (e) { alert('Failed to update'); }
+              }} 
+              className="btn-primary" style={{ minHeight: 32, padding: '4px 12px' }}
+            >
+              <Check size={14} /> Save
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p
+          style={{
+            fontSize: 'var(--text-body)',
+            color: 'var(--text-primary)',
+            lineHeight: 1.7,
+            marginBottom: 'var(--space-4)',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            position: 'relative',
+          }}
+        >
+          &ldquo;{kudos.message}&rdquo;
+        </p>
+      )}
 
       {/* People row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
