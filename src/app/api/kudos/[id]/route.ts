@@ -4,10 +4,10 @@ import Kudos from '@/lib/models/Kudos';
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const db = await dbConnect();
-    const id = params.id;
+    const { id } = await params;
     const body = await request.json();
     const { message } = body;
 
@@ -41,14 +41,14 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  return PATCH(request, { params });
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+  return PATCH(request, context);
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const db = await dbConnect();
-    const id = params.id;
+    const { id } = await params;
 
     if (!db) {
       const idx = memoryDb.kudos.findIndex(k => k._id === id);
