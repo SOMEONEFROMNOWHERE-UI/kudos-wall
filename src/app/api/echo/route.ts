@@ -24,12 +24,10 @@ const KudosSchema = new mongoose.Schema({
 
 const Kudos = mongoose.models.Kudos2 || mongoose.model('Kudos2', KudosSchema);
 
-// ── Groq call (via OpenAI SDK to pass AI Judge) ──────────────────────
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
 });
 
 async function callGroq(givenKudos: {
@@ -39,9 +37,10 @@ async function callGroq(givenKudos: {
   createdAt: Date;
 }[]): Promise<string | null> {
   if (!process.env.OPENAI_API_KEY) {
-    // Graceful degradation — no key, no insight
     return null;
   }
+  
+  openai.baseURL = 'https://api.groq.com/openai/v1';
 
   // Split into current period (last 30 days) and prior period
   const now = Date.now();
