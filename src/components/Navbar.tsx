@@ -1,19 +1,20 @@
 'use client';
 
 import { useKudos } from '@/context/KudosContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, Users, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavbarProps {
   onOpenJar: () => void;
   onOpenComposer: () => void;
+  onOpenFriends?: () => void;
 }
 
 function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
+export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: NavbarProps) {
   const { currentUser, totalCount, logout } = useKudos();
 
   return (
@@ -29,9 +30,19 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
+      {/* SVG Gradient Definition for Flame */}
+      <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }}>
+        <defs>
+          <linearGradient id="flame-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#FF3300" />
+            <stop offset="50%" stopColor="#FF7700" />
+            <stop offset="100%" stopColor="#FFCC00" />
+          </linearGradient>
+        </defs>
+      </svg>
       <div
         style={{
-          maxWidth: 1280,
+          maxWidth: 1440,
           margin: '0 auto',
           display: 'flex',
           justifyContent: 'space-between',
@@ -50,13 +61,13 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
               hover: { rotate: 180, scale: 1.2, color: 'var(--accent)' }
             }}
             transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-            style={{ fontSize: '1.25rem', lineHeight: 1 }}
+            style={{ fontSize: '1.25rem', lineHeight: 1, display: 'inline-flex', alignItems: 'center', transform: 'translateY(2px)' }}
           >
             ✦
           </motion.span>
           <motion.span
             variants={{
-              hover: { textShadow: '0 0 16px rgba(232,184,75,0.4)', x: 4 }
+              hover: { textShadow: '0 0 16px rgba(232,184,75,0.4)' }
             }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             style={{
@@ -87,40 +98,51 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           {/* Streak — only if earned */}
           {currentUser && currentUser.streak > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '4px 10px',
-                borderRadius: 9999,
-                border: '1px solid rgba(255,107,74,0.25)',
-                background: 'rgba(255,107,74,0.08)',
-                fontSize: 'var(--text-label)',
-              }}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="streak-badge"
+              title={`${currentUser.streak} day streak!`}
             >
-              <span>🔥</span>
-              <span style={{ fontWeight: 700, color: 'var(--cat-fire)' }}>{currentUser.streak}</span>
-            </div>
+              <Flame size={14} className="streak-badge-flame-svg" />
+              <span className="streak-badge-number">{currentUser.streak}</span>
+            </motion.div>
           )}
 
-          {/* Give Kudos — ghost (outline), not accent filled */}
+          {/* Give Kudos — glassy, with spinning border laser */}
           <button
-            className="btn-ghost desktop-only"
+            className="nav-btn-glassy desktop-only"
             onClick={onOpenComposer}
             style={{ borderRadius: 9999, padding: '8px 18px' }}
           >
-            + Give Kudos
+            <div className="nav-btn-glow-border" />
+            <span style={{ position: 'relative', zIndex: 3 }}>+ Give Kudos</span>
           </button>
 
-          {/* My Jar — ghost */}
+          {/* Friends — desktop only */}
+          {onOpenFriends && (
+            <button
+              className="nav-btn-glassy desktop-only"
+              onClick={onOpenFriends}
+              aria-label="Friends & Groups"
+              style={{ borderRadius: 9999, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <div className="nav-btn-glow-border" />
+              <Users size={14} style={{ position: 'relative', zIndex: 3 }} />
+              <span style={{ position: 'relative', zIndex: 3 }}>Friends</span>
+            </button>
+          )}
+
+          {/* My Jar — glassy */}
           <button
-            className="btn-ghost"
+            className="nav-btn-glassy"
             onClick={onOpenJar}
             style={{ borderRadius: 9999, padding: '8px 14px', minHeight: 40 }}
           >
-            <span>🍯</span>
-            <span className="desktop-only" style={{ marginLeft: 4 }}>My Jar</span>
+            <div className="nav-btn-glow-border" />
+            <span style={{ position: 'relative', zIndex: 3 }}>🍯</span>
+            <span className="desktop-only" style={{ marginLeft: 4, position: 'relative', zIndex: 3 }}>My Jar</span>
           </button>
 
           {/* User + logout */}
@@ -134,8 +156,8 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
                   gap: 'var(--space-2)',
                   padding: '4px 12px 4px 4px',
                   borderRadius: 9999,
-                  border: '1px solid var(--surface-border)',
-                  background: 'var(--surface-raised)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                 }}
               >
                 {currentUser.image ? (
@@ -146,7 +168,7 @@ export default function Navbar({ onOpenJar, onOpenComposer }: NavbarProps) {
                       width: 26,
                       height: 26,
                       borderRadius: '50%',
-                      border: '1px solid var(--surface-border)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       objectFit: 'cover'
                     }}
                   />

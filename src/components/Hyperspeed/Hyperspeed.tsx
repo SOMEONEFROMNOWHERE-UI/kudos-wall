@@ -2,7 +2,7 @@
 'use client';
 
 import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset } from 'postprocessing';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
 
 import './Hyperspeed.css';
@@ -45,13 +45,40 @@ const DEFAULT_EFFECT_OPTIONS = {
   },
 };
 
+export interface HyperspeedHandle {
+  /** Programmatically trigger the speed-up (warp) state — same as mousedown */
+  speedUp: () => void;
+  /** Return to normal cruise speed — same as mouseup */
+  slowDown: () => void;
+}
+
 interface HyperspeedProps {
   effectOptions?: typeof DEFAULT_EFFECT_OPTIONS;
 }
 
-const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }: HyperspeedProps) => {
+const Hyperspeed = forwardRef<HyperspeedHandle, HyperspeedProps>(({ effectOptions = DEFAULT_EFFECT_OPTIONS }, ref) => {
   const hyperspeed = useRef<HTMLDivElement>(null);
   const appRef = useRef<App | null>(null);
+
+  // Imperative handle — lets parent call speedUp()/slowDown() without a pointer event
+  useImperativeHandle(ref, () => ({
+    speedUp: () => {
+      if (!appRef.current) return;
+      appRef.current.fovTarget = appRef.current.options.fovSpeedUp as number;
+      appRef.current.speedUpTarget = appRef.current.options.speedUp as number;
+      if ((appRef.current.options as Record<string, unknown>).onSpeedUp) {
+        ((appRef.current.options as Record<string, () => void>).onSpeedUp)();
+      }
+    },
+    slowDown: () => {
+      if (!appRef.current) return;
+      appRef.current.fovTarget = appRef.current.options.fov as number;
+      appRef.current.speedUpTarget = 0;
+      if ((appRef.current.options as Record<string, unknown>).onSlowDown) {
+        ((appRef.current.options as Record<string, () => void>).onSlowDown)();
+      }
+    },
+  }), []);
 
   const mergedOptions = useMemo(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -1014,6 +1041,8 @@ const Hyperspeed = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }: HyperspeedProps)
   }, [mergedOptions]);
 
   return <div id="lights" ref={hyperspeed}></div>;
-};
+});
+
+Hyperspeed.displayName = 'Hyperspeed';
 
 export default Hyperspeed;

@@ -10,7 +10,7 @@ import PayItForward from './PayItForward';
 interface KudosJarProps {
   isOpen: boolean;
   onClose: () => void;
-  onPayItForward: (receiver: string, message: string) => void;
+  onPayItForward?: () => void;
 }
 
 export default function KudosJar({ isOpen, onClose, onPayItForward }: KudosJarProps) {
@@ -117,8 +117,8 @@ export default function KudosJar({ isOpen, onClose, onPayItForward }: KudosJarPr
               {myKudos.length > 0 && showPayItForward && (
                 <PayItForward
                   receiverName={currentUser?.name || ''}
-                  onPay={(r, m) => {
-                    onPayItForward(r, m);
+                  onPay={() => {
+                    onPayItForward?.();
                     setShowPayItForward(false);
                   }}
                   onDismiss={() => setShowPayItForward(false)}

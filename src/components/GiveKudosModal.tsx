@@ -16,7 +16,29 @@ interface GiveKudosModalProps {
 
 type ModalStep = 'form' | 'success';
 
-export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', prefillMessage = '' }: GiveKudosModalProps) {
+// Per-category emoji glow colors
+const EMOJI_GLOWS: Record<string, string> = {
+  '🔥': '0 0 8px rgba(251,146,60,0.8)',
+  '💎': '0 0 8px rgba(86,180,232,0.8)',
+  '🚀': '0 0 8px rgba(167,139,250,0.8)',
+  '🧠': '0 0 8px rgba(111,207,151,0.8)',
+  '🫂': '0 0 8px rgba(232,184,75,0.8)',
+};
+
+const PILL_ACCENT_COLORS: Record<string, string> = {
+  '🔥': '#FF6B4A',
+  '💎': '#56B4E8',
+  '🚀': '#A78BFA',
+  '🧠': '#6FCF97',
+  '🫂': '#E8B84B',
+};
+
+export default function GiveKudosModal({
+  isOpen,
+  onClose,
+  prefillReceiver = '',
+  prefillMessage = '',
+}: GiveKudosModalProps) {
   const { currentUser, addKudos } = useKudos();
   const [receiver, setReceiver] = useState(prefillReceiver);
   const [message, setMessage] = useState(prefillMessage);
@@ -24,9 +46,12 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<ModalStep>('form');
+  const [receiverFocused, setReceiverFocused] = useState(false);
+  const [messageFocused, setMessageFocused] = useState(false);
+  const [arrowHovered, setArrowHovered] = useState(false);
+  const [lastSelected, setLastSelected] = useState<KudosCategory | null>(null);
   const receiverRef = useRef<HTMLInputElement>(null);
 
-  // Reset when opened
   useEffect(() => {
     if (isOpen) {
       setReceiver(prefillReceiver);
@@ -35,6 +60,7 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
       setIsAnonymous(false);
       setStep('form');
       setIsSubmitting(false);
+      setLastSelected(null);
       setTimeout(() => receiverRef.current?.focus(), 150);
     }
   }, [isOpen, prefillReceiver, prefillMessage]);
@@ -52,10 +78,7 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
         isAnonymous,
       });
       setStep('success');
-      // Auto-close after success moment
-      setTimeout(() => {
-        onClose();
-      }, 1800);
+      setTimeout(() => onClose(), 1800);
     } catch {
       setIsSubmitting(false);
     }
@@ -63,12 +86,34 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
 
   const isValid = receiver.trim() && message.trim() && category;
 
-  const CATEGORY_COLORS: Record<string, string> = {
-    '🔥': 'var(--cat-fire)',
-    '💎': 'var(--cat-gem)',
-    '🚀': 'var(--cat-rocket)',
-    '🧠': 'var(--cat-brain)',
-    '🫂': 'var(--cat-heart)',
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    background: 'rgba(0,0,0,0.3)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    padding: '14px 18px',
+    color: '#E5E7EB',
+    fontSize: '1rem',
+    fontFamily: 'inherit',
+    outline: 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    WebkitFontSmoothing: 'antialiased',
+  };
+
+  const inputFocused: React.CSSProperties = {
+    borderColor: '#FB923C',
+    boxShadow: '0 0 0 4px rgba(251,146,60,0.12), 0 0 20px rgba(251,146,60,0.15)',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '0.75rem',
+    fontWeight: 700,
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 10,
+    WebkitFontSmoothing: 'antialiased',
   };
 
   return (
@@ -87,13 +132,13 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
               position: 'fixed',
               inset: 0,
               zIndex: 'var(--z-modal-backdrop)' as unknown as number,
-              background: 'rgba(0,0,0,0.7)',
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
             }}
           />
 
-          {/* ── Modal Centering Wrapper ── */}
+          {/* ── Centering wrapper ── */}
           <div
             style={{
               position: 'fixed',
@@ -103,295 +148,454 @@ export default function GiveKudosModal({ isOpen, onClose, prefillReceiver = '', 
               alignItems: 'center',
               justifyContent: 'center',
               pointerEvents: 'none',
-              padding: 'var(--space-4)',
+              padding: 20,
             }}
           >
             {/* ── Modal ── */}
             <motion.div
               key="modal"
-              initial={{ opacity: 0, y: 40, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 32, scale: 0.97 }}
-              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-              className="surface-overlay"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 16 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 width: '100%',
-                maxWidth: 500,
+                maxWidth: 520,
                 maxHeight: '92dvh',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 pointerEvents: 'auto',
+                background: 'rgba(20, 20, 24, 0.75)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 24,
+                boxShadow: `
+                  0 0 0 1px rgba(255,255,255,0.05) inset,
+                  0 24px 64px rgba(0,0,0,0.5),
+                  0 0 80px rgba(251,146,60,0.08)
+                `,
               }}
             >
-            <AnimatePresence mode="wait">
-              {step === 'success' ? (
-                /* ── Success State ── */
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.88 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                  style={{
-                    padding: 'var(--space-6) var(--space-5)',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                  }}
-                >
+              <AnimatePresence mode="wait">
+                {step === 'success' ? (
+                  /* ── Success State ── */
                   <motion.div
-                    initial={{ scale: 0, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.05 }}
-                    style={{ fontSize: '3.5rem', lineHeight: 1 }}
-                  >
-                    🎉
-                  </motion.div>
-                  <motion.h3
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-title"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    Kudos launched! ✨
-                  </motion.h3>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-body"
-                  >
-                    {receiver} just got a reason to smile.
-                  </motion.p>
-                  {/* Progress bar for auto-close */}
-                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.88 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                     style={{
-                      width: '80px',
-                      height: 2,
-                      background: 'var(--surface-border)',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      marginTop: 'var(--space-2)',
+                      padding: '64px 40px',
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 16,
                     }}
                   >
                     <motion.div
-                      initial={{ scaleX: 1, originX: 0 }}
-                      animate={{ scaleX: 0 }}
-                      transition={{ duration: 1.8, ease: 'linear' }}
-                      style={{ height: '100%', background: 'var(--accent)', borderRadius: 2 }}
-                    />
-                  </motion.div>
-                </motion.div>
-              ) : (
-                /* ── Form State ── */
-                <motion.div
-                  key="form"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, y: -16 }}
-                >
-                  {/* Header */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      padding: '32px 32px 24px 32px',
-                      borderBottom: '1px solid var(--surface-border)',
-                    }}
-                  >
-                    <div>
-                      <h2 className="text-title" style={{ color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                        Craft a Kudos
-                      </h2>
-                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--text-tertiary)', marginTop: 6 }}>
-                        Make it genuine — they&apos;ll keep it forever
-                      </p>
-                    </div>
-                    <button
-                      onClick={onClose}
-                      className="btn-icon"
-                      aria-label="Close"
-                      style={{ marginTop: -4, marginRight: -8 }}
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.05 }}
+                      style={{ fontSize: '3.5rem', lineHeight: 1 }}
                     >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  {/* Form Body */}
-                  <form
-                    onSubmit={handleSubmit}
-                    style={{
-                      margin: 0,
-                      padding: '24px 32px 32px 32px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '24px',
-                    }}
-                  >
-                    {/* Who shines? */}
-                    <div>
-                      <label
-                        htmlFor="kudos-receiver"
-                        style={{ display: 'block', marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}
-                      >
-                        Who shines today?
-                      </label>
-                      <input
-                        ref={receiverRef}
-                        id="kudos-receiver"
-                        type="text"
-                        value={receiver}
-                        onChange={e => setReceiver(e.target.value)}
-                        placeholder="Their name…"
-                        className="input-field"
-                        maxLength={50}
-                        required
+                      🎉
+                    </motion.div>
+                    <motion.h3
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      style={{ fontSize: '1.25rem', fontWeight: 700, color: '#EDEDF0', letterSpacing: '-0.02em' }}
+                    >
+                      Kudos launched! ✨
+                    </motion.h3>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      style={{ fontSize: '0.9375rem', color: '#9CA3AF', lineHeight: 1.6 }}
+                    >
+                      {receiver} just got a reason to smile.
+                    </motion.p>
+                    <motion.div
+                      style={{ width: 80, height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden', marginTop: 8 }}
+                    >
+                      <motion.div
+                        initial={{ scaleX: 1, originX: 0 }}
+                        animate={{ scaleX: 0 }}
+                        transition={{ duration: 1.8, ease: 'linear' }}
+                        style={{ height: '100%', background: 'linear-gradient(90deg, #FB923C, #F59E0B)', borderRadius: 2 }}
                       />
-                    </div>
-
-                    {/* Category — Vibe Check */}
-                    <div>
-                      <div style={{ marginBottom: 'var(--space-2)', fontSize: 'var(--text-label)', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Vibe check
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                        {CATEGORIES.map(cat => {
-                          const selected = category === cat.icon;
-                          const catColor = CATEGORY_COLORS[cat.icon];
-                          return (
-                            <motion.button
-                              key={cat.icon}
-                              type="button"
-                              onClick={() => setCategory(cat.icon)}
-                              whileTap={{ scale: 0.93 }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--space-1)',
-                                padding: '7px 14px',
-                                borderRadius: 9999,
-                                border: selected ? `1.5px solid ${catColor}` : '1px solid var(--surface-border)',
-                                background: selected ? `${catColor}15` : 'transparent',
-                                color: selected ? catColor : 'var(--text-tertiary)',
-                                fontSize: 'var(--text-body)',
-                                fontWeight: selected ? 600 : 400,
-                                cursor: 'pointer',
-                                transition: 'all 160ms var(--ease-smooth)',
-                                minHeight: 38,
-                              }}
-                            >
-                              <span style={{ fontSize: '1rem' }}>{cat.icon}</span>
-                              <span>{cat.label}</span>
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Message */}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)', alignItems: 'baseline' }}>
-                        <label
-                          htmlFor="kudos-message"
-                          style={{ fontSize: 'var(--text-label)', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}
-                        >
-                          Your words
-                        </label>
-                        <span
+                    </motion.div>
+                  </motion.div>
+                ) : (
+                  /* ── Form State ── */
+                  <motion.div
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, y: -16 }}
+                  >
+                    {/* ── Header ── */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        padding: '28px 28px 20px 28px',
+                        position: 'relative',
+                      }}
+                    >
+                      <div>
+                        <h2
                           style={{
-                            fontSize: 'var(--text-label)',
-                            color: message.length > 1800 ? '#E07070' : 'var(--text-tertiary)',
+                            fontSize: '1.25rem',
+                            fontWeight: 700,
+                            color: '#EDEDF0',
+                            letterSpacing: '-0.03em',
+                            lineHeight: 1.2,
+                            margin: 0,
                           }}
                         >
-                          {message.length}/2000
-                        </span>
+                          Craft a Kudos
+                        </h2>
+                        <p
+                          style={{
+                            fontSize: '0.95rem',
+                            fontStyle: 'italic',
+                            color: '#9CA3AF',
+                            marginTop: 6,
+                            fontWeight: 400,
+                          }}
+                        >
+                          Make it genuine — they&apos;ll keep it forever
+                        </p>
                       </div>
-                      <textarea
-                        id="kudos-message"
-                        value={message}
-                        onChange={e => setMessage(e.target.value)}
-                        placeholder="Be specific — what exactly did they do that made a difference?"
-                        className="input-field"
-                        rows={4}
-                        maxLength={2000}
-                        required
-                        style={{ resize: 'none' }}
-                      />
-                    </div>
 
-                    {/* Anonymous toggle */}
-                    <label
-                      htmlFor="kudos-anon"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer', userSelect: 'none', alignSelf: 'flex-start' }}
-                    >
-                      {/* Custom toggle */}
-                      <div
+                      {/* Ghost close button */}
+                      <motion.button
+                        onClick={onClose}
+                        whileHover={{ rotate: 90, background: 'rgba(255,255,255,0.1)', opacity: 1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        aria-label="Close"
                         style={{
-                          width: 40,
-                          height: 22,
-                          borderRadius: 11,
-                          background: isAnonymous ? 'var(--accent-muted)' : 'var(--surface-border)',
-                          border: `1px solid ${isAnonymous ? 'var(--accent-border)' : 'var(--surface-border)'}`,
-                          position: 'relative',
-                          transition: 'all 200ms',
+                          width: 34,
+                          height: 34,
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: '#9CA3AF',
+                          opacity: 0.7,
                           flexShrink: 0,
+                          marginTop: 2,
                         }}
                       >
-                        <div
+                        <X size={16} />
+                      </motion.button>
+                    </div>
+
+                    {/* Gradient divider */}
+                    <div
+                      style={{
+                        height: 1,
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                        margin: '0 28px',
+                      }}
+                    />
+
+                    {/* ── Form Body ── */}
+                    <form
+                      onSubmit={handleSubmit}
+                      style={{
+                        padding: '28px 28px 28px 28px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 28,
+                      }}
+                    >
+                      {/* WHO SHINES TODAY */}
+                      <div>
+                        <label htmlFor="kudos-receiver" style={labelStyle}>
+                          Who Shines Today?
+                        </label>
+                        <input
+                          ref={receiverRef}
+                          id="kudos-receiver"
+                          type="text"
+                          value={receiver}
+                          onChange={e => setReceiver(e.target.value)}
+                          onFocus={() => setReceiverFocused(true)}
+                          onBlur={() => setReceiverFocused(false)}
+                          placeholder="Their name…"
+                          maxLength={50}
+                          required
                           style={{
-                            position: 'absolute',
-                            top: 2,
-                            left: isAnonymous ? 20 : 2,
-                            width: 16,
-                            height: 16,
-                            borderRadius: '50%',
-                            background: isAnonymous ? 'var(--accent)' : 'var(--text-tertiary)',
-                            transition: 'left 250ms cubic-bezier(0.16, 1, 0.3, 1), background 250ms',
+                            ...inputBase,
+                            ...(receiverFocused ? inputFocused : {}),
                           }}
                         />
                       </div>
-                      <input type="checkbox" id="kudos-anon" checked={isAnonymous} onChange={() => setIsAnonymous(v => !v)} style={{ display: 'none' }} />
-                      <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>
-                        Send anonymously <span style={{ opacity: 0.6 }}>🥷</span>
-                      </span>
-                    </label>
 
-                    {/* Divider */}
-                    <div style={{ height: 1, background: 'var(--surface-border)', opacity: 0.5 }} />
+                      {/* VIBE CHECK PILLS */}
+                      <div>
+                        <div style={labelStyle}>Vibe Check</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                          {CATEGORIES.map(cat => {
+                            const selected = category === cat.icon;
+                            const accentColor = PILL_ACCENT_COLORS[cat.icon];
+                            const isJustSelected = lastSelected === cat.icon;
 
-                    {/* Submit — THE ONE accent element in this modal */}
-                    <motion.button
-                      type="submit"
-                      className="btn-primary"
-                      disabled={!isValid || isSubmitting}
-                      whileTap={isValid ? { scale: 0.97 } : {}}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      style={{ width: '100%', fontSize: 'var(--text-body)', padding: '13px', letterSpacing: '0.01em' }}
-                    >
-                      {isSubmitting ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                          <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                            style={{ display: 'inline-block', fontSize: '1rem' }}
+                            return (
+                              <motion.button
+                                key={cat.icon}
+                                type="button"
+                                onClick={() => {
+                                  setCategory(cat.icon);
+                                  setLastSelected(cat.icon);
+                                  setTimeout(() => setLastSelected(null), 400);
+                                }}
+                                whileTap={{ scale: 0.93 }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 8,
+                                  padding: '10px 18px',
+                                  borderRadius: 9999,
+                                  border: selected
+                                    ? `1.5px solid ${accentColor}`
+                                    : '1px solid rgba(255,255,255,0.08)',
+                                  background: selected
+                                    ? `linear-gradient(135deg, ${accentColor}33, ${accentColor}22)`
+                                    : 'rgba(255,255,255,0.04)',
+                                  color: selected ? '#FED7AA' : '#E5E7EB',
+                                  fontSize: '0.9rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: selected ? `0 0 16px ${accentColor}40` : 'none',
+                                  WebkitFontSmoothing: 'antialiased',
+                                }}
+                                onMouseEnter={e => {
+                                  if (!selected) {
+                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)';
+                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.16)';
+                                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
+                                  }
+                                }}
+                                onMouseLeave={e => {
+                                  if (!selected) {
+                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0px)';
+                                  }
+                                }}
+                              >
+                                <motion.span
+                                  animate={isJustSelected ? { scale: [1, 1.3, 1] } : {}}
+                                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                                  style={{
+                                    fontSize: '1rem',
+                                    lineHeight: 1,
+                                    filter: selected ? `drop-shadow(${EMOJI_GLOWS[cat.icon]})` : 'none',
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {cat.icon}
+                                </motion.span>
+                                <span>{cat.label}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* YOUR WORDS TEXTAREA */}
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'baseline',
+                            marginBottom: 10,
+                          }}
+                        >
+                          <label htmlFor="kudos-message" style={{ ...labelStyle, marginBottom: 0 }}>
+                            Your Words
+                          </label>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              color: message.length > 1800 ? '#FB923C' : '#6B7280',
+                              transition: 'color 0.2s ease',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
                           >
-                            ✦
-                          </motion.span>
-                          Sending…
+                            {message.length}/2000
+                          </span>
+                        </div>
+                        <textarea
+                          id="kudos-message"
+                          value={message}
+                          onChange={e => setMessage(e.target.value)}
+                          onFocus={() => setMessageFocused(true)}
+                          onBlur={() => setMessageFocused(false)}
+                          placeholder="Be specific — what exactly did they do that made a difference?"
+                          rows={4}
+                          maxLength={2000}
+                          required
+                          style={{
+                            ...inputBase,
+                            minHeight: 120,
+                            resize: 'none',
+                            lineHeight: 1.6,
+                            fontStyle: 'normal',
+                            ...(messageFocused ? inputFocused : {}),
+                          }}
+                        />
+                      </div>
+
+                      {/* SEND ANONYMOUSLY TOGGLE */}
+                      <label
+                        htmlFor="kudos-anon"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        {/* Animated toggle track */}
+                        <div
+                          style={{
+                            width: 44,
+                            height: 24,
+                            borderRadius: 12,
+                            background: isAnonymous
+                              ? 'linear-gradient(135deg, #FB923C, #F59E0B)'
+                              : 'rgba(255,255,255,0.1)',
+                            position: 'relative',
+                            transition: 'background 0.25s ease',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {/* Knob */}
+                          <motion.div
+                            animate={{ x: isAnonymous ? 22 : 2 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            style={{
+                              position: 'absolute',
+                              top: 2,
+                              width: 20,
+                              height: 20,
+                              borderRadius: '50%',
+                              background: '#fff',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                            }}
+                          />
+                        </div>
+                        <input
+                          type="checkbox"
+                          id="kudos-anon"
+                          checked={isAnonymous}
+                          onChange={() => setIsAnonymous(v => !v)}
+                          style={{ display: 'none' }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '0.95rem',
+                            color: '#D1D5DB',
+                            fontWeight: 400,
+                          }}
+                        >
+                          Send anonymously{' '}
+                          <span style={{ fontSize: 20, verticalAlign: 'middle', lineHeight: 1 }}>🥷</span>
                         </span>
-                      ) : (
-                        'Send Kudos →'
-                      )}
-                    </motion.button>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
+                      </label>
+
+                      {/* Gradient divider */}
+                      <div
+                        style={{
+                          height: 1,
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                        }}
+                      />
+
+                      {/* SEND KUDOS BUTTON */}
+                      <motion.button
+                        type="submit"
+                        disabled={!isValid || isSubmitting}
+                        whileTap={isValid ? { scale: 0.98 } : {}}
+                        onHoverStart={() => setArrowHovered(true)}
+                        onHoverEnd={() => setArrowHovered(false)}
+                        style={{
+                          width: '100%',
+                          padding: '16px 24px',
+                          borderRadius: 14,
+                          border: 'none',
+                          background: isValid
+                            ? 'linear-gradient(135deg, #FB923C 0%, #F59E0B 100%)'
+                            : 'rgba(255,255,255,0.08)',
+                          color: isValid ? '#1A1208' : '#6B7280',
+                          fontSize: '1.05rem',
+                          fontWeight: 700,
+                          cursor: isValid && !isSubmitting ? 'pointer' : 'not-allowed',
+                          opacity: isValid ? 1 : 0.5,
+                          boxShadow: isValid ? '0 4px 20px rgba(251,146,60,0.35)' : 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          letterSpacing: '0.01em',
+                          transition: 'filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease',
+                          ...(isValid && !isSubmitting
+                            ? {
+                                filter: arrowHovered ? 'brightness(1.08)' : 'brightness(1)',
+                                transform: arrowHovered ? 'translateY(-2px)' : 'translateY(0px)',
+                                boxShadow: arrowHovered
+                                  ? '0 6px 28px rgba(251,146,60,0.45)'
+                                  : '0 4px 20px rgba(251,146,60,0.35)',
+                              }
+                            : {}),
+                        }}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <motion.span
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                              style={{ display: 'inline-block', fontSize: '1rem' }}
+                            >
+                              ✦
+                            </motion.span>
+                            Sending…
+                          </>
+                        ) : (
+                          <>
+                            Send Kudos
+                            <motion.span
+                              animate={{ x: arrowHovered && isValid ? 4 : 0 }}
+                              transition={{ duration: 0.2, ease: 'easeOut' }}
+                              style={{ display: 'inline-block' }}
+                            >
+                              →
+                            </motion.span>
+                          </>
+                        )}
+                      </motion.button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
