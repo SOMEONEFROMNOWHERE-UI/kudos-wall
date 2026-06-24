@@ -24,18 +24,22 @@ const KudosSchema = new mongoose.Schema({
 
 const Kudos = mongoose.models.Kudos2 || mongoose.model('Kudos2', KudosSchema);
 
-// ── Grok call ────────────────────────────────────────────────────────
-async function callGrok(givenKudos: {
+// ── Groq call ────────────────────────────────────────────────────────
+import Groq from 'groq-sdk';
+
+async function callGroq(givenKudos: {
   message: string;
   category: string;
   receiver: string;
   createdAt: Date;
 }[]): Promise<string | null> {
-  const apiKey = process.env.GROK_API_KEY || process.env.XAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     // Graceful degradation — no key, no insight
     return null;
   }
+
+  const groq = new Groq({ apiKey });
 
   // Split into current period (last 30 days) and prior period
   const now = Date.now();
@@ -67,32 +71,19 @@ ${prior.length > 0 ? formatKudos(prior) : 'No prior period data.'}
 What genuine pattern shift do you notice in what this person has been recognizing lately?`;
 
   try {
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'grok-beta',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 200,
-        temperature: 0.6,
-      }),
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      model: 'llama3-8b-8192', // Replace with any supported Groq model
+      max_tokens: 200,
+      temperature: 0.6,
     });
 
-    if (!response.ok) {
-      console.error('Grok API error:', response.status, await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || null;
+    return chatCompletion.choices[0]?.message?.content?.trim() || null;
   } catch (error) {
-    console.error('Grok fetch error:', error);
+    console.error('Groq fetch error:', error);
     return null;
   }
 }
@@ -180,7 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate new insight
-    const content = await callGrok(allGiven);
+    const content = await callGroq(allGiven);
 
     if (!content) {
       // No API key or Grok error — return a graceful null

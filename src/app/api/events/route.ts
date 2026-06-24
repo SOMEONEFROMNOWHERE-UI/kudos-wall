@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       sseClients.set(clientId, { name: userName, controller });
 
       // Send initial state
-      const presence = Array.from(sseClients.values()).map(c => c.name);
+      const presence = Array.from(new Set(Array.from(sseClients.values()).map(c => c.name)));
       const today = new Date().toISOString().split('T')[0];
       if (ssePulseToday.date !== today) { ssePulseToday.count = 0; ssePulseToday.date = today; }
 
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
       req.signal.addEventListener('abort', () => {
         clearInterval(heartbeat);
         sseClients.delete(clientId);
-        const remaining = Array.from(sseClients.values()).map(c => c.name);
+        const remaining = Array.from(new Set(Array.from(sseClients.values()).map(c => c.name)));
         broadcast('presence', { users: remaining });
         try { controller.close(); } catch { /* already closed */ }
       });
