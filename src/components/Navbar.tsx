@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useKudos } from '@/context/KudosContext';
 import { LogOut, Users, Flame } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavbarProps {
   onOpenJar: () => void;
@@ -16,6 +17,29 @@ function getInitials(name: string) {
 
 export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: NavbarProps) {
   const { currentUser, totalCount, logout } = useKudos();
+  const [isAvatarHovered, setIsAvatarHovered] = useState(false);
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
+  const [logoSparkles, setLogoSparkles] = useState<{ id: number; x: number; y: number; size: number }[]>([]);
+
+  const handleLogoMouseEnter = () => {
+    setIsLogoHovered(true);
+    const particles = Array.from({ length: 5 }).map((_, i) => {
+      const angle = (i / 5) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+      const distance = 16 + Math.random() * 20;
+      return {
+        id: Date.now() + i + Math.random(),
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance,
+        size: 3 + Math.random() * 3,
+      };
+    });
+    setLogoSparkles(particles);
+  };
+
+  const handleLogoMouseLeave = () => {
+    setIsLogoHovered(false);
+    setLogoSparkles([]);
+  };
 
   return (
     <header
@@ -52,46 +76,178 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
         }}
       >
         {/* ── Logo ── */}
-        <motion.div 
-          whileHover="hover"
-          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0, cursor: 'default' }}
+        <div
+          onMouseEnter={handleLogoMouseEnter}
+          onMouseLeave={handleLogoMouseLeave}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexShrink: 0,
+            cursor: 'pointer',
+            position: 'relative',
+            paddingRight: '12px',
+          }}
         >
-          <motion.span 
-            variants={{
-              hover: { rotate: 180, scale: 1.2, color: 'var(--accent)' }
-            }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-            style={{ fontSize: '1.25rem', lineHeight: 1, display: 'inline-flex', alignItems: 'center', transform: 'translateY(2px)' }}
-          >
-            ✦
-          </motion.span>
+          {/* Defs for Logo Sparkle Gradient */}
+          <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }}>
+            <defs>
+              <linearGradient id="logo-sparkle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFF275" />
+                <stop offset="60%" stopColor="#F5A623" />
+                <stop offset="100%" stopColor="#FF5096" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Sparkle Icon Container */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Tiny floating hover sparkles */}
+            <AnimatePresence>
+              {logoSparkles.map(p => (
+                <motion.svg
+                  key={p.id}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                  animate={{ opacity: 0, scale: 1.2, x: p.x, y: p.y }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    width: p.size,
+                    height: p.size,
+                    pointerEvents: 'none',
+                    zIndex: 10,
+                  }}
+                >
+                  <path
+                    d="M12 2C12 2 13.5 8.5 15.5 10.5C17.5 12.5 24 14 24 14C24 14 17.5 15.5 15.5 17.5C13.5 19.5 12 26 12 26C12 26 10.5 19.5 8.5 17.5C6.5 15.5 0 14 0 14C0 14 6.5 12.5 8.5 10.5C10.5 8.5 12 2 12 2Z"
+                    fill="#FBBF24"
+                  />
+                </motion.svg>
+              ))}
+            </AnimatePresence>
+
+            <motion.svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              animate={isLogoHovered ? {
+                rotate: [0, 45, -15, 15, 0],
+                scale: 1.2,
+                filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.65))',
+              } : {
+                rotate: 0,
+                scale: 1,
+                filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))',
+              }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              style={{ width: '18px', height: '18px', display: 'block' }}
+            >
+              <path
+                d="M12 2C12 2 13.5 8.5 15.5 10.5C17.5 12.5 24 14 24 14C24 14 17.5 15.5 15.5 17.5C13.5 19.5 12 26 12 26C12 26 10.5 19.5 8.5 17.5C6.5 15.5 0 14 0 14C0 14 6.5 12.5 8.5 10.5C10.5 8.5 12 2 12 2Z"
+                fill="url(#logo-sparkle-grad)"
+              />
+            </motion.svg>
+          </div>
+
+          {/* Text Logo with metallic gradient sweep on hover */}
           <motion.span
-            variants={{
-              hover: { textShadow: '0 0 16px rgba(232,184,75,0.4)' }
+            animate={isLogoHovered ? {
+              backgroundPosition: ['0% 0%', '200% 0%'],
+              textShadow: [
+                '0 0 0px rgba(232,184,75,0)',
+                '0 0 20px rgba(251,191,36,0.4)',
+                '0 0 0px rgba(232,184,75,0)'
+              ]
+            } : {
+              backgroundPosition: '0% 0%',
+              textShadow: '0 0 0px rgba(0,0,0,0)'
             }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            transition={isLogoHovered ? {
+              backgroundPosition: { duration: 2, ease: 'linear', repeat: Infinity },
+              textShadow: { duration: 2, ease: 'easeInOut', repeat: Infinity }
+            } : { duration: 0.3 }}
             style={{
               fontSize: 'var(--text-title)',
-              fontWeight: 700,
+              fontWeight: 800,
               letterSpacing: '-0.03em',
-              color: 'var(--text-primary)',
+              backgroundImage: 'linear-gradient(90deg, #FFFFFF 0%, #FFE082 30%, #F5A623 50%, #FF70A6 70%, #FFFFFF 100%)',
+              backgroundSize: '200% auto',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-block',
             }}
           >
             Glow Up Wall
           </motion.span>
-        </motion.div>
+        </div>
 
-        {/* ── Center: Pulse counter — ambient, not prominent ── */}
-        <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <span
+        {/* ── Center: Live Pulse Counter ── */}
+        <div className="desktop-only" style={{ display: 'flex', alignItems: 'center' }}>
+          <motion.div
+            key={totalCount}
+            initial={{ scale: 0.96, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 450, damping: 18 }}
+            className="nav-btn-glassy"
             style={{
-              fontSize: 'var(--text-label)',
-              color: 'var(--text-tertiary)',
-              fontVariantNumeric: 'tabular-nums',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              borderRadius: '9999px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid transparent',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              backdropFilter: 'blur(8px)',
+              cursor: 'default',
+              height: 36,
             }}
           >
-            {totalCount > 0 ? `${totalCount} kudos shared` : 'Be the first to give kudos'}
-          </span>
+            <div className="nav-btn-glow-border" style={{ opacity: 0.5 }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative', zIndex: 3 }}>
+              {/* Premium Sparkles Icon */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  width: '13px',
+                  height: '13px',
+                  color: '#FBBF24',
+                  filter: 'drop-shadow(0 0 5px rgba(251,191,36,0.45))',
+                }}
+              >
+                <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.3-6.3l-.7.7M6.7 17.3l-.7.7m12.6 0l-.7-.7M6.7 6.7l-.7-.7" />
+              </svg>
+
+              {/* Counter Text */}
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#EDEDF0',
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {totalCount > 0 ? (
+                  <>
+                    <strong style={{ color: '#FBBF24', fontWeight: 800, marginRight: '4px' }}>{totalCount}</strong>
+                    kudos shared
+                  </>
+                ) : (
+                  'Be the first to give kudos'
+                )}
+              </span>
+            </div>
+          </motion.div>
         </div>
 
         {/* ── Right side ── */}
@@ -148,61 +304,84 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
           {/* User + logout */}
           {currentUser && (
             <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              {/* Avatar chip */}
+              {/* Avatar chip with glowing border animation */}
               <div
+                className="nav-btn-glassy"
+                onMouseEnter={() => setIsAvatarHovered(true)}
+                onMouseLeave={() => setIsAvatarHovered(false)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 'var(--space-2)',
-                  padding: '4px 12px 4px 4px',
+                  gap: '8px',
+                  padding: '4px 14px 4px 4px',
                   borderRadius: 9999,
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: isAvatarHovered ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid transparent',
+                  transition: 'background-color 0.3s ease',
+                  cursor: 'pointer',
+                  height: 36,
                 }}
               >
-                {currentUser.image ? (
-                  <img
-                    src={currentUser.image}
-                    alt={currentUser.name}
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: '50%',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: '50%',
-                      background: 'var(--accent-muted)',
-                      border: '1px solid var(--accent-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      color: 'var(--accent)',
-                    }}
-                  >
-                    {getInitials(currentUser.name)}
-                  </div>
-                )}
-                <span style={{ fontSize: 'var(--text-label)', color: 'var(--text-secondary)', fontWeight: 500 }}>
-                  {currentUser.name}
-                </span>
+                <div className="nav-btn-glow-border" style={{ opacity: isAvatarHovered ? 1 : 0.45 }} />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', zIndex: 3 }}>
+                  {currentUser.image ? (
+                    <img
+                      src={currentUser.image}
+                      alt={currentUser.name}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: '1.5px solid rgba(255, 255, 255, 0.2)',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: 'var(--accent-muted)',
+                        border: '1.5px solid var(--accent-border)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: 'var(--accent)',
+                      }}
+                    >
+                      {getInitials(currentUser.name)}
+                    </div>
+                  )}
+                  <span style={{ fontSize: '12px', color: '#EDEDF0', fontWeight: 600 }}>
+                    {currentUser.name}
+                  </span>
+                </div>
               </div>
 
+              {/* Sign out button with glassy border animation */}
               <button
                 onClick={logout}
-                className="btn-icon"
+                className="nav-btn-glassy"
                 aria-label="Sign out"
                 title="Sign out"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid transparent',
+                  padding: 0,
+                }}
               >
-                <LogOut size={13} />
+                <div className="nav-btn-glow-border" style={{ borderRadius: '10px' }} />
+                <LogOut size={13} style={{ position: 'relative', zIndex: 3 }} />
               </button>
             </div>
           )}

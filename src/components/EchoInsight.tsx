@@ -20,6 +20,47 @@ function formatDate(dateStr: string): string {
   }
 }
 
+function PremiumSpinner() {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: '14px',
+        height: '14px',
+        display: 'inline-block',
+      }}
+    >
+      {[...Array(8)].map((_, i) => (
+        <motion.span
+          key={i}
+          animate={{
+            opacity: [0.15, 1, 0.15],
+          }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            delay: i * 0.1,
+            ease: 'linear',
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            width: '2.5px',
+            height: '2.5px',
+            marginLeft: '-1.25px',
+            background: '#F5A623',
+            borderRadius: '50%',
+            boxShadow: '0 0 5px #F5A623, 0 0 2px #FFF275',
+            transformOrigin: '50% 7px',
+            transform: `rotate(${i * 45}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function EchoInsight() {
   const { currentUser, kudosList } = useKudos();
   const [insight, setInsight] = useState<EchoData | null>(null);
@@ -164,9 +205,9 @@ export default function EchoInsight() {
             className="btn-icon"
             aria-label="Refresh Echo insight"
             title="Refresh"
-            style={{ width: 26, height: 26, border: 'none', fontSize: '0.8rem' }}
+            style={{ width: 26, height: 26, border: 'none', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {isLoading ? '⟳' : '↺'}
+            {isLoading ? <PremiumSpinner /> : '↺'}
           </button>
           <button
             onClick={handleDismiss}

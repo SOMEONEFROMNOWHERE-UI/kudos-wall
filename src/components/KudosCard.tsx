@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useKudos } from '@/context/KudosContext';
 import type { KudosData } from '@/types';
@@ -392,6 +392,11 @@ function ConfettiBurst() {
   );
 }
 
+const AvatarMemo = memo(Avatar);
+const ReactionBurstMemo = memo(ReactionBurst);
+const ReactionIconMemo = memo(ReactionIcon);
+const ConfettiBurstMemo = memo(ConfettiBurst);
+
 export default function KudosCard({ kudos, index, isNew = false }: KudosCardProps) {
   const accentGradient = ACCENT_GRADIENTS[kudos.category] || ACCENT_GRADIENTS['🫂'];
   const tagInfo = VIBE_TAG_STYLING[kudos.category] || VIBE_TAG_STYLING['🫂'];
@@ -412,6 +417,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const [isDeleting, setIsDeleting] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
 
@@ -440,19 +446,33 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left - width / 2;
-    const mouseY = e.clientY - rect.top - height / 2;
-    // Apply 3D tilt: max 4 degrees
-    const rX = -(mouseY / (height / 2)) * 4;
-    const rY = (mouseX / (width / 2)) * 4;
-    setRotateX(rX);
-    setRotateY(rY);
+    if (rafRef.current) return;
+    
+    const { clientX, clientY } = e;
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) {
+        rafRef.current = null;
+        return;
+      }
+      const rect = cardRef.current.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const mouseX = clientX - rect.left - width / 2;
+      const mouseY = clientY - rect.top - height / 2;
+      // Apply 3D tilt: max 4 degrees
+      const rX = -(mouseY / (height / 2)) * 4;
+      const rY = (mouseX / (width / 2)) * 4;
+      setRotateX(rX);
+      setRotateY(rY);
+      rafRef.current = null;
+    });
   };
 
   const handleMouseLeave = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     setRotateX(0);
     setRotateY(0);
     setIsHovered(false);
@@ -520,7 +540,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
       {/* Main card body with true glassmorphism */}
       <div className="kudos-card-inner">
         {/* Confetti Burst */}
-        {showConfetti && <ConfettiBurst />}
+        {showConfetti && <ConfettiBurstMemo />}
 
         {/* Floating Glow Accent Left Border */}
         <div
@@ -704,7 +724,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
           {/* To */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Avatar name={kudos.receiver} />
+            <AvatarMemo name={kudos.receiver} />
             <div>
               <div style={{ fontSize: '10px', color: '#666680', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>To</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#E0E0F0', lineHeight: 1 }}>{kudos.receiver}</div>
@@ -718,7 +738,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
                 {kudos.isAnonymous ? '🥷 Anonymous' : kudos.sender}
               </div>
             </div>
-            {!kudos.isAnonymous && <Avatar name={kudos.sender} />}
+            {!kudos.isAnonymous && <AvatarMemo name={kudos.sender} />}
           </div>
         </div>
 
@@ -737,7 +757,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
             return (
               <div key={emoji} style={{ position: 'relative' }}>
-                <ReactionBurst active={isBursting} emoji={emoji} />
+                <ReactionBurstMemo active={isBursting} emoji={emoji} />
 
                 {/* Floating +1 animation */}
                 <AnimatePresence>
@@ -844,7 +864,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
                     transition: 'background-color 0.25s, border-color 0.25s, color 0.25s',
                   }}
                 >
-                  <ReactionIcon emoji={emoji} isHovered={hoveredReaction === emoji} isActive={active} />
+                  <ReactionIconMemo emoji={emoji} isHovered={hoveredReaction === emoji} isActive={active} />
                   <AnimatePresence mode="popLayout">
                     {count > 0 && (
                       <motion.span

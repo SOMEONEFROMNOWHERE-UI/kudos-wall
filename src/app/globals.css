@@ -1055,7 +1055,7 @@ textarea.input-field {
   z-index: 2;
   pointer-events: none;
   overflow: hidden;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity 0.3s ease, padding 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
