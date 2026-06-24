@@ -33,6 +33,66 @@ const PILL_ACCENT_COLORS: Record<string, string> = {
   '🫂': '#E8B84B',
 };
 
+const VIBE_BORDER_CLASSES: Record<string, string> = {
+  '🔥': 'border-vibe-fire',
+  '💎': 'border-vibe-gem',
+  '🚀': 'border-vibe-rocket',
+  '🧠': 'border-vibe-brain',
+  '🫂': 'border-vibe-team',
+};
+
+const VIBE_THEME_VARIABLES: Record<string, Record<string, string>> = {
+  '🔥': {
+    '--vibe-accent': '#FF6B4A',
+    '--vibe-accent-secondary': '#F59E0B',
+    '--vibe-accent-border': 'rgba(255, 107, 74, 0.45)',
+    '--vibe-accent-border-dim': 'rgba(255, 107, 74, 0.25)',
+    '--vibe-accent-glow': 'rgba(255, 107, 74, 0.25)',
+    '--vibe-accent-glow-dim': 'rgba(255, 107, 74, 0.1)',
+  },
+  '💎': {
+    '--vibe-accent': '#56B4E8',
+    '--vibe-accent-secondary': '#3B82F6',
+    '--vibe-accent-border': 'rgba(86, 180, 232, 0.45)',
+    '--vibe-accent-border-dim': 'rgba(86, 180, 232, 0.25)',
+    '--vibe-accent-glow': 'rgba(86, 180, 232, 0.25)',
+    '--vibe-accent-glow-dim': 'rgba(86, 180, 232, 0.1)',
+  },
+  '🚀': {
+    '--vibe-accent': '#A78BFA',
+    '--vibe-accent-secondary': '#EC4899',
+    '--vibe-accent-border': 'rgba(167, 139, 250, 0.45)',
+    '--vibe-accent-border-dim': 'rgba(167, 139, 250, 0.25)',
+    '--vibe-accent-glow': 'rgba(167, 139, 250, 0.25)',
+    '--vibe-accent-glow-dim': 'rgba(167, 139, 250, 0.1)',
+  },
+  '🧠': {
+    '--vibe-accent': '#6FCF97',
+    '--vibe-accent-secondary': '#10B981',
+    '--vibe-accent-border': 'rgba(111, 207, 151, 0.45)',
+    '--vibe-accent-border-dim': 'rgba(111, 207, 151, 0.25)',
+    '--vibe-accent-glow': 'rgba(111, 207, 151, 0.25)',
+    '--vibe-accent-glow-dim': 'rgba(111, 207, 151, 0.1)',
+  },
+  '🫂': {
+    '--vibe-accent': '#E8B84B',
+    '--vibe-accent-secondary': '#F59E0B',
+    '--vibe-accent-border': 'rgba(232, 184, 75, 0.45)',
+    '--vibe-accent-border-dim': 'rgba(232, 184, 75, 0.25)',
+    '--vibe-accent-glow': 'rgba(232, 184, 75, 0.25)',
+    '--vibe-accent-glow-dim': 'rgba(232, 184, 75, 0.1)',
+  },
+};
+
+const DEFAULT_THEME_VARIABLES: Record<string, string> = {
+  '--vibe-accent': '#FB923C',
+  '--vibe-accent-secondary': '#F59E0B',
+  '--vibe-accent-border': 'rgba(255, 255, 255, 0.12)',
+  '--vibe-accent-border-dim': 'rgba(255, 255, 255, 0.06)',
+  '--vibe-accent-glow': 'rgba(255, 255, 255, 0.05)',
+  '--vibe-accent-glow-dim': 'rgba(255, 255, 255, 0.01)',
+};
+
 export default function GiveKudosModal({
   isOpen,
   onClose,
@@ -44,10 +104,9 @@ export default function GiveKudosModal({
   const [message, setMessage] = useState(prefillMessage);
   const [category, setCategory] = useState<KudosCategory | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [duration, setDuration] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<ModalStep>('form');
-  const [receiverFocused, setReceiverFocused] = useState(false);
-  const [messageFocused, setMessageFocused] = useState(false);
   const [arrowHovered, setArrowHovered] = useState(false);
   const [lastSelected, setLastSelected] = useState<KudosCategory | null>(null);
   const receiverRef = useRef<HTMLInputElement>(null);
@@ -58,6 +117,7 @@ export default function GiveKudosModal({
       setMessage(prefillMessage);
       setCategory(null);
       setIsAnonymous(false);
+      setDuration(0);
       setStep('form');
       setIsSubmitting(false);
       setLastSelected(null);
@@ -76,6 +136,7 @@ export default function GiveKudosModal({
         message: message.trim(),
         category,
         isAnonymous,
+        duration,
       });
       setStep('success');
       setTimeout(() => onClose(), 1800);
@@ -85,25 +146,7 @@ export default function GiveKudosModal({
   };
 
   const isValid = receiver.trim() && message.trim() && category;
-
-  const inputBase: React.CSSProperties = {
-    width: '100%',
-    background: 'rgba(0,0,0,0.3)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 14,
-    padding: '14px 18px',
-    color: '#E5E7EB',
-    fontSize: '1rem',
-    fontFamily: 'inherit',
-    outline: 'none',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-    WebkitFontSmoothing: 'antialiased',
-  };
-
-  const inputFocused: React.CSSProperties = {
-    borderColor: '#FB923C',
-    boxShadow: '0 0 0 4px rgba(251,146,60,0.12), 0 0 20px rgba(251,146,60,0.15)',
-  };
+  const themeVariables = (category && VIBE_THEME_VARIABLES[category]) || DEFAULT_THEME_VARIABLES;
 
   const labelStyle: React.CSSProperties = {
     display: 'block',
@@ -115,6 +158,7 @@ export default function GiveKudosModal({
     marginBottom: 10,
     WebkitFontSmoothing: 'antialiased',
   };
+
 
   return (
     <AnimatePresence>
@@ -158,26 +202,15 @@ export default function GiveKudosModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 16 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className={`modal-wrapper ${category ? VIBE_BORDER_CLASSES[category] : 'modal-border-default'}`}
               style={{
-                width: '100%',
-                maxWidth: 520,
-                maxHeight: '92dvh',
-                overflowY: 'auto',
-                overflowX: 'hidden',
                 pointerEvents: 'auto',
-                background: 'rgba(20, 20, 24, 0.75)',
-                backdropFilter: 'blur(24px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 24,
-                boxShadow: `
-                  0 0 0 1px rgba(255,255,255,0.05) inset,
-                  0 24px 64px rgba(0,0,0,0.5),
-                  0 0 80px rgba(251,146,60,0.08)
-                `,
+                ...themeVariables as React.CSSProperties,
               }}
             >
-              <AnimatePresence mode="wait">
+              <div className="modal-glow-border" />
+              <div className="modal-inner">
+                <AnimatePresence mode="wait">
                 {step === 'success' ? (
                   /* ── Success State ── */
                   <motion.div
@@ -328,17 +361,12 @@ export default function GiveKudosModal({
                           ref={receiverRef}
                           id="kudos-receiver"
                           type="text"
+                          className="kudos-modal-input"
                           value={receiver}
                           onChange={e => setReceiver(e.target.value)}
-                          onFocus={() => setReceiverFocused(true)}
-                          onBlur={() => setReceiverFocused(false)}
                           placeholder="Their name…"
                           maxLength={50}
                           required
-                          style={{
-                            ...inputBase,
-                            ...(receiverFocused ? inputFocused : {}),
-                          }}
                         />
                       </div>
 
@@ -431,7 +459,7 @@ export default function GiveKudosModal({
                           <span
                             style={{
                               fontSize: '0.75rem',
-                              color: message.length > 1800 ? '#FB923C' : '#6B7280',
+                              color: message.length > 1800 ? 'var(--vibe-accent)' : '#6B7280',
                               transition: 'color 0.2s ease',
                               fontVariantNumeric: 'tabular-nums',
                             }}
@@ -441,22 +469,13 @@ export default function GiveKudosModal({
                         </div>
                         <textarea
                           id="kudos-message"
+                          className="kudos-modal-input"
                           value={message}
                           onChange={e => setMessage(e.target.value)}
-                          onFocus={() => setMessageFocused(true)}
-                          onBlur={() => setMessageFocused(false)}
                           placeholder="Be specific — what exactly did they do that made a difference?"
                           rows={4}
                           maxLength={2000}
                           required
-                          style={{
-                            ...inputBase,
-                            minHeight: 120,
-                            resize: 'none',
-                            lineHeight: 1.6,
-                            fontStyle: 'normal',
-                            ...(messageFocused ? inputFocused : {}),
-                          }}
                         />
                       </div>
 
@@ -479,7 +498,7 @@ export default function GiveKudosModal({
                             height: 24,
                             borderRadius: 12,
                             background: isAnonymous
-                              ? 'linear-gradient(135deg, #FB923C, #F59E0B)'
+                              ? 'linear-gradient(135deg, var(--vibe-accent), var(--vibe-accent-secondary))'
                               : 'rgba(255,255,255,0.1)',
                             position: 'relative',
                             transition: 'background 0.25s ease',
@@ -520,6 +539,66 @@ export default function GiveKudosModal({
                         </span>
                       </label>
 
+                      {/* KUDOS LIFESPAN PICKER */}
+                      <div>
+                        <label style={labelStyle}>
+                          Kudos Lifespan
+                        </label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 2 }}>
+                          {[
+                            { label: 'Keep Forever', value: 0, icon: '♾️' },
+                            { label: '1 Hour', value: 60, icon: '🕐' },
+                            { label: '24 Hours', value: 1440, icon: '📅' },
+                            { label: '3 Days', value: 4320, icon: '⏳' },
+                          ].map(opt => {
+                            const selected = duration === opt.value;
+                            return (
+                              <motion.button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setDuration(opt.value)}
+                                whileTap={{ scale: 0.95 }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '8px 14px',
+                                  borderRadius: 999,
+                                  border: selected
+                                    ? '1.5px solid var(--vibe-accent)'
+                                    : '1px solid rgba(255,255,255,0.08)',
+                                  background: selected
+                                    ? 'var(--vibe-accent-glow)'
+                                    : 'rgba(255,255,255,0.04)',
+                                  color: selected ? 'var(--vibe-accent)' : '#9CA3AF',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: selected ? '0 0 12px var(--vibe-accent-glow)' : 'none',
+                                  WebkitFontSmoothing: 'antialiased',
+                                }}
+                                onMouseEnter={e => {
+                                  if (!selected) {
+                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)';
+                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.16)';
+                                  }
+                                }}
+                                onMouseLeave={e => {
+                                  if (!selected) {
+                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)';
+                                  }
+                                }}
+                              >
+                                <span>{opt.icon}</span>
+                                <span>{opt.label}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       {/* Gradient divider */}
                       <div
                         style={{
@@ -541,14 +620,14 @@ export default function GiveKudosModal({
                           borderRadius: 14,
                           border: 'none',
                           background: isValid
-                            ? 'linear-gradient(135deg, #FB923C 0%, #F59E0B 100%)'
+                            ? 'linear-gradient(135deg, var(--vibe-accent) 0%, var(--vibe-accent-secondary) 100%)'
                             : 'rgba(255,255,255,0.08)',
                           color: isValid ? '#1A1208' : '#6B7280',
                           fontSize: '1.05rem',
                           fontWeight: 700,
                           cursor: isValid && !isSubmitting ? 'pointer' : 'not-allowed',
                           opacity: isValid ? 1 : 0.5,
-                          boxShadow: isValid ? '0 4px 20px rgba(251,146,60,0.35)' : 'none',
+                          boxShadow: isValid ? '0 4px 20px var(--vibe-accent-glow)' : 'none',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -560,8 +639,8 @@ export default function GiveKudosModal({
                                 filter: arrowHovered ? 'brightness(1.08)' : 'brightness(1)',
                                 transform: arrowHovered ? 'translateY(-2px)' : 'translateY(0px)',
                                 boxShadow: arrowHovered
-                                  ? '0 6px 28px rgba(251,146,60,0.45)'
-                                  : '0 4px 20px rgba(251,146,60,0.35)',
+                                  ? '0 6px 28px var(--vibe-accent-shadow)'
+                                  : '0 4px 20px var(--vibe-accent-glow)',
                               }
                             : {}),
                         }}
@@ -594,7 +673,8 @@ export default function GiveKudosModal({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
+          </motion.div>
           </div>
         </>
       )}

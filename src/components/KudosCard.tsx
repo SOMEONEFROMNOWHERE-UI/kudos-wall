@@ -397,8 +397,33 @@ const ReactionBurstMemo = memo(ReactionBurst);
 const ReactionIconMemo = memo(ReactionIcon);
 const ConfettiBurstMemo = memo(ConfettiBurst);
 
+const VIBE_BORDER_CLASSES: Record<string, string> = {
+  '🔥': 'border-vibe-fire',
+  '💎': 'border-vibe-gem',
+  '🚀': 'border-vibe-rocket',
+  '🧠': 'border-vibe-brain',
+  '🫂': 'border-vibe-team',
+};
+
+function formatTimeLeft(ms: number | null): string {
+  if (ms === null) return '';
+  if (ms <= 0) return 'Expired';
+  const totalSecs = Math.floor(ms / 1000);
+  const secs = totalSecs % 60;
+  const totalMins = Math.floor(totalSecs / 60);
+  const mins = totalMins % 60;
+  const hours = Math.floor(totalMins / 60);
+
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (mins > 0 || hours > 0) parts.push(`${mins}m`);
+  parts.push(`${secs}s`);
+  return parts.join(' ');
+}
+
 export default function KudosCard({ kudos, index, isNew = false }: KudosCardProps) {
   const accentGradient = ACCENT_GRADIENTS[kudos.category] || ACCENT_GRADIENTS['🫂'];
+  const accentColor = ACCENT_COLORS[kudos.category] || ACCENT_COLORS['🫂'];
   const tagInfo = VIBE_TAG_STYLING[kudos.category] || VIBE_TAG_STYLING['🫂'];
 
   const { live, currentUser, updateKudos, deleteKudos } = useKudos();
@@ -417,11 +442,43 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const [isDeleting, setIsDeleting] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
 
   const isOwner = currentUser?.name === kudos.sender && !kudos.isAnonymous;
+
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [pctLeft, setPctLeft] = useState<number>(100);
+
+  useEffect(() => {
+    if (!kudos.expiresAt) return;
+    const expiry = new Date(kudos.expiresAt).getTime();
+    const created = kudos.createdAt ? new Date(kudos.createdAt).getTime() : Date.now();
+    const totalDuration = expiry - created;
+
+    const updateTimer = () => {
+      const remaining = expiry - Date.now();
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        setPctLeft(0);
+        return false;
+      }
+      setTimeLeft(remaining);
+      if (totalDuration > 0) {
+        const pct = Math.max(0, Math.min(100, (remaining / totalDuration) * 100));
+        setPctLeft(pct);
+      }
+      return true;
+    };
+
+    updateTimer();
+    const interval = setInterval(() => {
+      const active = updateTimer();
+      if (!active) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [kudos.expiresAt, kudos.createdAt]);
 
   // Unmount confetti after 2 seconds
   useEffect(() => {
@@ -444,37 +501,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
     }
   }, [live.reactions, kudos._id]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    if (rafRef.current) return;
-    
-    const { clientX, clientY } = e;
-    rafRef.current = requestAnimationFrame(() => {
-      if (!cardRef.current) {
-        rafRef.current = null;
-        return;
-      }
-      const rect = cardRef.current.getBoundingClientRect();
-      const width = rect.width;
-      const height = rect.height;
-      const mouseX = clientX - rect.left - width / 2;
-      const mouseY = clientY - rect.top - height / 2;
-      // Apply 3D tilt: max 4 degrees
-      const rX = -(mouseY / (height / 2)) * 4;
-      const rY = (mouseX / (width / 2)) * 4;
-      setRotateX(rX);
-      setRotateY(rY);
-      rafRef.current = null;
-    });
-  };
-
   const handleMouseLeave = () => {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    setRotateX(0);
-    setRotateY(0);
     setIsHovered(false);
   };
 
@@ -508,34 +535,39 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
     } catch { /* optimistic */ }
   };
 
+  const isExpired = timeLeft !== null && timeLeft <= 0;
+
   return (
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        duration: 0.5,
-        delay: index * 0.08,
-        ease: [0.34, 1.56, 0.64, 1], // Springy easing
-      }}
-      onMouseMove={handleMouseMove}
+      animate={isExpired
+        ? { scale: 0, opacity: 0, height: 0, padding: 0, margin: 0, overflow: 'hidden' }
+        : { opacity: 1, y: 0, scale: 1 }
+      }
+      transition={isExpired
+        ? { duration: 0.5, ease: 'easeOut' }
+        : {
+            duration: 0.5,
+            delay: index * 0.08,
+            ease: [0.34, 1.56, 0.64, 1], // Springy easing
+          }
+      }
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
       className="kudos-card-wrapper"
       style={{
-        transform: isHovered 
-          ? `perspective(1000px) translateY(-4px) scale(1.01) rotateX(${rotateX}deg) rotateY(${rotateY}deg)` 
-          : `perspective(1000px) translateY(0px) scale(1) rotateX(0deg) rotateY(0deg)`,
-        filter: isHovered
-          ? 'drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 15px rgba(103, 80, 162, 0.25)) drop-shadow(0 0 4px rgba(3, 179, 195, 0.15))'
-          : 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))',
-        transition: isHovered 
-          ? 'transform 0.1s ease-out, filter 0.3s ease'
-          : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease',
+        transform: isExpired ? 'scale(0)' : 'none',
+        filter: isExpired
+          ? 'none'
+          : isHovered
+            ? `drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 16px ${accentColor}28)`
+            : 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))',
+        transition: 'filter 0.3s ease',
       }}
     >
       {/* Glassy rotating border laser */}
-      <div className="kudos-card-glow-border" />
+      <div className={`kudos-card-glow-border ${VIBE_BORDER_CLASSES[kudos.category] || 'border-vibe-team'}`} />
 
       {/* Main card body with true glassmorphism */}
       <div className="kudos-card-inner">
@@ -599,6 +631,26 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
           {/* Right actions and timestamp */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {kudos.expiresAt && timeLeft !== null && (
+              <span 
+                style={{ 
+                  fontSize: '11px', 
+                  fontWeight: 600,
+                  color: timeLeft <= 600000 ? '#EF4444' : '#F59E0B', 
+                  background: timeLeft <= 600000 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                  padding: '3px 8px',
+                  borderRadius: '999px',
+                  border: timeLeft <= 600000 ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid rgba(245, 158, 11, 0.2)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: timeLeft <= 600000 ? '0 0 10px rgba(239, 68, 68, 0.15)' : 'none',
+                }}
+              >
+                <span>⏳</span>
+                <span>{formatTimeLeft(timeLeft)}</span>
+              </span>
+            )}
             <span 
               style={{ 
                 fontSize: '12px', 
@@ -749,7 +801,8 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {REACTION_EMOJIS.map(emoji => {
             const active = myReactions[emoji];
-            const count = reactions[emoji];
+            const count = reactions[emoji] || 0;
+            const hasCount = count > 0;
             const isAnimating = animating === emoji;
             const isBursting = bursting === emoji;
 
@@ -824,66 +877,100 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
                   onMouseLeave={() => setHoveredReaction(null)}
                   animate={isAnimating ? { scale: [1, 1.3, 0.92, 1] } : {}}
                   whileHover={{
-                    scale: 1.06,
-                    y: -1,
-                    backgroundColor: active ? styleInfo.activeBgHover : 'rgba(255,255,255,0.08)',
-                    borderColor: active ? styleInfo.activeColor : 'rgba(255,255,255,0.18)',
+                    scale: 1.08,
+                    y: -1.5,
+                    backgroundColor: active 
+                      ? styleInfo.activeBgHover 
+                      : hasCount 
+                        ? 'rgba(255,255,255,0.08)' 
+                        : 'rgba(255,255,255,0.05)',
+                    borderColor: active 
+                      ? styleInfo.activeColor 
+                      : hasCount 
+                        ? styleInfo.activeColor 
+                        : 'rgba(255,255,255,0.2)',
                     boxShadow: active 
                       ? `0 6px 20px rgba(0,0,0,0.45), 0 0 12px ${styleInfo.activeBorder}`
-                      : '0 6px 16px rgba(0,0,0,0.3)',
+                      : hasCount 
+                        ? `0 6px 16px rgba(0,0,0,0.35), 0 0 8px ${styleInfo.activeBorder}`
+                        : '0 6px 16px rgba(0,0,0,0.25)',
                   }}
                   transition={{ duration: 0.2 }}
                   title={`React with ${emoji}`}
-                  aria-label={`${emoji} reaction${count > 0 ? `, ${count} reactions` : ''}`}
+                  aria-label={`${emoji} reaction${hasCount ? `, ${count} reactions` : ''}`}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    padding: '8px 16px',
+                    justifyContent: 'center',
+                    gap: hasCount ? '6px' : '0px',
+                    fontSize: '13px',
+                    padding: hasCount ? '6px 14px' : '0px',
+                    width: hasCount ? 'auto' : '34px',
+                    height: '34px',
+                    minWidth: hasCount ? 'auto' : '34px',
                     borderRadius: '999px',
                     background: active 
                       ? styleInfo.activeBg 
-                      : count > 0 
-                        ? 'rgba(255,255,255,0.04)' 
-                        : 'rgba(255,255,255,0.02)',
+                      : hasCount 
+                        ? 'rgba(255,255,255,0.03)' 
+                        : 'rgba(255,255,255,0.015)',
                     border: active 
-                      ? `1px solid ${styleInfo.activeBorder}` 
-                      : count > 0 
-                        ? '1px solid rgba(255,255,255,0.08)' 
+                      ? `1.5px solid ${styleInfo.activeColor}` 
+                      : hasCount 
+                        ? `1px solid ${styleInfo.activeBorder}` 
                         : '1px solid rgba(255,255,255,0.04)',
                     color: active 
                       ? styleInfo.activeColor 
-                      : count > 0 
+                      : hasCount 
                         ? '#C2C2DF' 
                         : '#6B6B83',
                     cursor: 'pointer',
                     position: 'relative',
                     zIndex: 1,
                     backdropFilter: 'blur(8px)',
-                    transition: 'background-color 0.25s, border-color 0.25s, color 0.25s',
+                    transition: 'background-color 0.25s, border-color 0.25s, color 0.25s, width 0.25s, padding 0.25s, gap 0.25s',
                   }}
                 >
-                  <ReactionIconMemo emoji={emoji} isHovered={hoveredReaction === emoji} isActive={active} />
-                  <AnimatePresence mode="popLayout">
-                    {count > 0 && (
-                      <motion.span
-                        key={count}
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        style={{ fontWeight: active ? 800 : 600, fontSize: '0.85rem' }}
-                        transition={{ type: 'spring', stiffness: 450, damping: 14 }}
-                      >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: hasCount ? '6px' : '0' }}>
+                    <ReactionIconMemo emoji={emoji} isHovered={hoveredReaction === emoji} isActive={active} />
+                    {hasCount && (
+                      <span style={{ fontWeight: active ? 800 : 600, fontSize: '0.85rem' }}>
                         {count}
-                      </motion.span>
+                      </span>
                     )}
-                  </AnimatePresence>
+                  </div>
                 </motion.button>
               </div>
             );
           })}
         </div>
+
+        {/* Expiration Progress Bar at bottom */}
+        {kudos.expiresAt && timeLeft !== null && timeLeft > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 12,
+              right: 12,
+              height: '3px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '999px',
+              overflow: 'hidden',
+              pointerEvents: 'none',
+            }}
+          >
+            <motion.div
+              style={{
+                height: '100%',
+                width: `${pctLeft}%`,
+                background: `linear-gradient(90deg, ${tagInfo.text}, ${ACCENT_COLORS[kudos.category] || '#F5A623'})`,
+                boxShadow: `0 0 8px ${tagInfo.text}`,
+              }}
+              transition={{ ease: 'linear' }}
+            />
+          </div>
+        )}
       </div>
     </motion.div>
   );

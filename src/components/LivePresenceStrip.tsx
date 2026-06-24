@@ -27,7 +27,7 @@ export default function LivePresenceStrip() {
   const others = uniqueUsers.filter(u => u !== currentUser?.name);
   const total = uniqueUsers.length;
 
-  if (total < 1) return null;
+  if (others.length < 1) return null;
 
   // Mobile: show max 3 avatars + overflow count
   const mobileMax = 3;

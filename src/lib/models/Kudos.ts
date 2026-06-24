@@ -6,6 +6,7 @@ export interface IKudos extends Document {
   message: string;
   category: string;
   isAnonymous: boolean;
+  expiresAt?: Date | null;
   createdAt: Date;
 }
 
@@ -38,6 +39,10 @@ const KudosSchema = new Schema<IKudos>(
     isAnonymous: {
       type: Boolean,
       default: false,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
     },
   },
   {

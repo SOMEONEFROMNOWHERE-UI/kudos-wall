@@ -7,6 +7,8 @@ export interface KudosData {
   message: string;
   category: KudosCategory;
   isAnonymous: boolean;
+  duration?: number;
+  expiresAt?: string | null;
   createdAt?: string;
 }
 

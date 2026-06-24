@@ -207,7 +207,7 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
               height: 36,
             }}
           >
-            <div className="nav-btn-glow-border" style={{ opacity: 0.5 }} />
+            <div className="nav-btn-glow-border" />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative', zIndex: 3 }}>
               {/* Premium Sparkles Icon */}

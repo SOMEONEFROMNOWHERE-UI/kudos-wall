@@ -17,10 +17,14 @@ import EchoInsight from './EchoInsight';
 import { Plus } from 'lucide-react';
 
 export default function KudosFeed() {
-  const { kudosList, currentUser } = useKudos();
+  const { kudosList, currentUser, live } = useKudos();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isJarOpen, setIsJarOpen] = useState(false);
   const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(false);
+
+  const uniqueUsers = Array.from(new Set(live?.presenceUsers || []));
+  const others = uniqueUsers.filter(u => u !== currentUser?.name);
+  const hasOthersOnline = others.length >= 1;
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--surface-base)' }}>
@@ -44,7 +48,7 @@ export default function KudosFeed() {
           width: '100%',
           maxWidth: 1440,
           margin: '0 auto',
-          padding: 'var(--space-5) var(--space-4)',
+          padding: `${hasOthersOnline ? 'var(--space-3)' : 'var(--space-4)'} var(--space-4)`,
           paddingBottom: 120,
           display: 'grid',
           gridTemplateColumns: kudosList.length > 0 ? '1fr 280px' : '1fr',
@@ -56,24 +60,16 @@ export default function KudosFeed() {
         <main>
           {/* Page header */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
             style={{ marginBottom: 'var(--space-5)' }}
           >
-            <h2
-              style={{
-                fontSize: 'var(--text-title)',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}
-            >
-              Hey, <span style={{ color: 'var(--accent)' }}>{currentUser?.name}</span> 👋
+            <h2 className="feed-header-title">
+              Hey, <span className="feed-header-name">{currentUser?.name}</span> <span className="waving-hand">👋</span>
             </h2>
-            <p style={{ marginTop: 4, fontSize: 'var(--text-body)', color: 'var(--text-tertiary)' }}>
-              See what your team has been celebrating
+            <p className="feed-header-subtitle">
+              <span className="presence-pulse-dot" /> See what your team has been celebrating
             </p>
           </motion.div>
 

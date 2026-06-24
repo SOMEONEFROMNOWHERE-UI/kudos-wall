@@ -17,11 +17,11 @@ export async function GET(request: Request) {
     const countOnly = searchParams.get('count');
 
     if (!db) {
+      let kudos = memoryDb.kudos.filter(k => !k.expiresAt || new Date(k.expiresAt) > new Date());
       if (countOnly === 'true') {
-        return NextResponse.json({ count: memoryDb.kudos.length });
+        return NextResponse.json({ count: kudos.length });
       }
 
-      let kudos = memoryDb.kudos;
       if (receiver) {
         kudos = kudos.filter(k => k.receiver.toLowerCase() === receiver.toLowerCase());
       }
@@ -33,11 +33,22 @@ export async function GET(request: Request) {
     }
 
     if (countOnly === 'true') {
-      const total = await Kudos.countDocuments();
+      const total = await Kudos.countDocuments({
+        $or: [
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      });
       return NextResponse.json({ count: total });
     }
 
-    const query = receiver ? { receiver: { $regex: new RegExp(`^${receiver}$`, 'i') } } : {};
+    const query = {
+      ...(receiver ? { receiver: { $regex: new RegExp(`^${receiver}$`, 'i') } } : {}),
+      $or: [
+        { expiresAt: null },
+        { expiresAt: { $gt: new Date() } }
+      ]
+    };
     
     const kudos = await Kudos.find(query)
       .sort({ createdAt: -1 })
@@ -59,7 +70,7 @@ export async function POST(request: Request) {
     const db = await dbConnect();
 
     const body = await request.json();
-    const { sender, receiver, message, category, isAnonymous } = body;
+    const { sender, receiver, message, category, isAnonymous, duration } = body;
 
     // Validation
     if (!sender || !receiver || !message || !category) {
@@ -84,6 +95,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const expiresAtVal = duration ? new Date(Date.now() + duration * 60 * 1000) : null;
+
     if (!db) {
       const newKudos = {
         _id: uuidv4(),
@@ -92,6 +105,7 @@ export async function POST(request: Request) {
         message: message.trim(),
         category,
         isAnonymous: !!isAnonymous,
+        expiresAt: expiresAtVal ? expiresAtVal.toISOString() : null,
         createdAt: new Date().toISOString(),
       };
       
@@ -122,6 +136,7 @@ export async function POST(request: Request) {
       message: message.trim(),
       category,
       isAnonymous: !!isAnonymous,
+      expiresAt: expiresAtVal,
     });
 
     // Update sender's streak
