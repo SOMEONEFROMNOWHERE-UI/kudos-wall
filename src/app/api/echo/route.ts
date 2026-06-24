@@ -27,8 +27,7 @@ const Kudos = mongoose.models.Kudos2 || mongoose.model('Kudos2', KudosSchema);
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.GROK_API_KEY,
-  baseURL: 'https://api.x.ai/v1',
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 async function callGroq(givenKudos: {
@@ -37,9 +36,11 @@ async function callGroq(givenKudos: {
   receiver: string;
   createdAt: Date;
 }[]): Promise<string | null> {
-  if (!process.env.GROK_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return null;
   }
+  
+  openai.baseURL = 'https://api.groq.com/openai/v1';
 
   // Split into current period (last 30 days) and prior period
   const now = Date.now();

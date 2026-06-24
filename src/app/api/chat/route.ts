@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.GROK_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { message } = await req.json();
     const chatCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: message || 'Hello' }],
+      messages: [{ role: 'user', content: message }],
     });
     return NextResponse.json({ response: chatCompletion.choices[0].message.content });
   } catch (error) {
