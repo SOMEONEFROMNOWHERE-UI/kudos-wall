@@ -24,8 +24,8 @@ const KudosSchema = new mongoose.Schema({
 
 const Kudos = mongoose.models.Kudos2 || mongoose.model('Kudos2', KudosSchema);
 
-// ── Groq call (via OpenAI SDK to pass AI Judge) ──────────────────────
-import OpenAI from 'openai';
+// ── Groq call ────────────────────────────────────────────────────────
+import Groq from 'groq-sdk';
 
 async function callGroq(givenKudos: {
   message: string;
@@ -33,18 +33,12 @@ async function callGroq(givenKudos: {
   receiver: string;
   createdAt: Date;
 }[]): Promise<string | null> {
-  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!process.env.GROQ_API_KEY) {
     // Graceful degradation — no key, no insight
     return null;
   }
-
-  // Use the official OpenAI SDK pointing to Groq's OpenAI-compatible endpoint
-  // This satisfies naive static analyzers looking for `import OpenAI`
-  const openai = new OpenAI({
-    apiKey: apiKey,
-    baseURL: 'https://api.groq.com/openai/v1',
-  });
+  
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
   // Split into current period (last 30 days) and prior period
   const now = Date.now();
@@ -76,7 +70,7 @@ ${prior.length > 0 ? formatKudos(prior) : 'No prior period data.'}
 What genuine pattern shift do you notice in what this person has been recognizing lately?`;
 
   try {
-    const chatCompletion = await openai.chat.completions.create({
+    const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
