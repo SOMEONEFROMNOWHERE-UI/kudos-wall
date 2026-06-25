@@ -1372,61 +1372,43 @@ textarea.input-field {
 }
 
 /* ============================================================
-   MODAL GRADIENT BORDERS & CONTROLS (v10 — @property spotlight)
+   MODAL GRADIENT BORDERS & CONTROLS (v11 — permanent vibe glow)
    ============================================================ */
-
-@property --border-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
 
 .modal-wrapper {
   position: relative;
   width: 100%;
   max-width: 520px;
   border-radius: 24px;
-  /* 1.5px transparent border lets the background-border-box gradient show through */
-  border: 1.5px solid transparent;
-  background:
-    /* Inner fill — opaque, clipped to padding box so it doesn't cover the border area */
-    linear-gradient(rgba(13, 13, 20, 0.97), rgba(13, 13, 20, 0.97)) padding-box,
-    /* Animated spotlight that sweeps around the border — GPU composited via @property */
-    conic-gradient(
-      from var(--border-angle),
-      transparent        0deg,
-      transparent       70deg,
-      var(--vibe-accent, #7C3AED)           110deg,
-      var(--vibe-accent-secondary, #06B6D4) 145deg,
-      var(--vibe-accent, #7C3AED)           180deg,
-      transparent       220deg,
-      transparent       360deg
-    ) border-box;
+  /* Border color comes from CSS variable set dynamically per vibe */
+  border: 1.5px solid var(--vibe-accent-border, rgba(255, 255, 255, 0.1));
+  background: rgba(13, 13, 20, 0.97);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow:
     0 32px 80px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 0 36px var(--vibe-accent-glow, rgba(255,255,255,0.03));
+    /* Permanent outer glow — colour driven by active vibe */
+    0 0 28px var(--vibe-accent-glow, rgba(255, 255, 255, 0.04)),
+    0 0 60px var(--vibe-accent-glow-dim, transparent);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.5s ease;
-  animation: modal-border-spin 5s linear infinite;
+  /* Smooth colour transition when the user switches vibes */
+  transition:
+    border-color 0.45s ease,
+    box-shadow 0.45s ease;
 }
 
 .modal-wrapper:hover {
   box-shadow:
     0 36px 88px rgba(0, 0, 0, 0.75),
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    0 0 56px var(--vibe-accent-glow, rgba(255,255,255,0.05));
+    0 0 36px var(--vibe-accent-glow, rgba(255, 255, 255, 0.06)),
+    0 0 72px var(--vibe-accent-glow-dim, transparent);
 }
 
-@keyframes modal-border-spin {
-  to { --border-angle: 360deg; }
-}
-
-/* Legacy glow-border div — no longer needed with new approach */
+/* Legacy glow-border div — no longer needed */
 .modal-glow-border {
   display: none;
 }
