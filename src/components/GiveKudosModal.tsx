@@ -216,16 +216,7 @@ export default function GiveKudosModal({
   const isValid = receiver.trim() && message.trim() && category;
   const themeVariables = (category && VIBE_THEME_VARIABLES[category]) || DEFAULT_THEME_VARIABLES;
 
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    marginBottom: 10,
-    WebkitFontSmoothing: 'antialiased',
-  };
+
 
 
   return (
@@ -276,7 +267,7 @@ export default function GiveKudosModal({
                 ...themeVariables as React.CSSProperties,
               }}
             >
-              <div className="modal-glow-border" />
+
               <div className="modal-inner" style={{ position: 'relative', overflowX: 'hidden', overflowY: 'auto' }}>
                 {/* Static ambient colored glow in modal corner */}
                 <div
@@ -443,7 +434,7 @@ export default function GiveKudosModal({
                     >
                       {/* WHO SHINES TODAY */}
                       <motion.div variants={FORM_ITEM_VARIANTS}>
-                        <label htmlFor="kudos-receiver" style={labelStyle}>
+                        <label htmlFor="kudos-receiver" className="kudos-section-label">
                           Who Shines Today?
                         </label>
                         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -476,13 +467,14 @@ export default function GiveKudosModal({
                         </div>
                       </motion.div>
 
-                      {/* VIBE CHECK PILLS */}
+                      {/* VIBE CHECK PILLS — 3-column premium grid */}
                       <motion.div variants={FORM_ITEM_VARIANTS}>
-                        <div style={labelStyle}>Vibe Check</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                        <div className="kudos-section-label">Vibe Check</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                           {CATEGORIES.map(cat => {
                             const selected = category === cat.icon;
                             const isJustSelected = lastSelected === cat.icon;
+                            const accentColor = PILL_ACCENT_COLORS[cat.icon];
 
                             return (
                               <motion.button
@@ -493,61 +485,63 @@ export default function GiveKudosModal({
                                   setLastSelected(cat.icon);
                                   setTimeout(() => setLastSelected(null), 400);
                                 }}
-                                whileTap={{ scale: 0.93 }}
+                                whileTap={{ scale: 0.94 }}
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: 8,
-                                  padding: '10px 18px',
-                                  borderRadius: 9999,
+                                  justifyContent: 'center',
+                                  gap: 7,
+                                  padding: '11px 10px',
+                                  borderRadius: 12,
                                   border: selected
-                                    ? `1.5px solid var(--vibe-accent)`
-                                    : '1px solid rgba(255,255,255,0.06)',
+                                    ? `1.5px solid ${accentColor}`
+                                    : '1px solid rgba(255,255,255,0.07)',
                                   background: selected
-                                    ? `linear-gradient(135deg, var(--vibe-accent) 0%, var(--vibe-accent-secondary) 100%)`
-                                    : 'rgba(255,255,255,0.03)',
-                                  color: selected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)',
-                                  fontSize: '0.9rem',
-                                  fontWeight: 600,
+                                    ? `linear-gradient(145deg, ${accentColor}22 0%, ${accentColor}0E 100%)`
+                                    : 'rgba(255,255,255,0.025)',
+                                  color: selected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.55)',
+                                  fontSize: '0.845rem',
+                                  fontWeight: selected ? 700 : 500,
+                                  letterSpacing: '-0.01em',
                                   cursor: 'pointer',
-                                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                                  boxShadow: selected 
-                                    ? `0 6px 20px var(--vibe-accent-glow), 0 0 10px var(--vibe-accent-glow)` 
-                                    : 'none',
-                                  textShadow: selected ? '0 1px 2px rgba(0,0,0,0.2)' : 'none',
+                                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                                  boxShadow: selected
+                                    ? `0 4px 18px ${accentColor}30, inset 0 1px 0 rgba(255,255,255,0.1)`
+                                    : 'inset 0 1px 0 rgba(255,255,255,0.03)',
                                   WebkitFontSmoothing: 'antialiased',
                                 }}
                                 onMouseEnter={e => {
                                   if (!selected) {
-                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)';
-                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.15)';
-                                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                                    (e.currentTarget as HTMLButtonElement).style.color = '#FFFFFF';
+                                    const el = e.currentTarget as HTMLButtonElement;
+                                    el.style.background = `rgba(255,255,255,0.06)`;
+                                    el.style.borderColor = 'rgba(255,255,255,0.14)';
+                                    el.style.color = 'rgba(255,255,255,0.85)';
+                                    el.style.transform = 'translateY(-1px)';
                                   }
                                 }}
                                 onMouseLeave={e => {
                                   if (!selected) {
-                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)';
-                                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.06)';
-                                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0px)';
-                                    (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255, 255, 255, 0.7)';
+                                    const el = e.currentTarget as HTMLButtonElement;
+                                    el.style.background = 'rgba(255,255,255,0.025)';
+                                    el.style.borderColor = 'rgba(255,255,255,0.07)';
+                                    el.style.color = 'rgba(255,255,255,0.55)';
+                                    el.style.transform = 'translateY(0)';
                                   }
                                 }}
                               >
                                 <motion.span
-                                  animate={isJustSelected ? { scale: [1, 1.3, 1] } : {}}
-                                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                                  animate={isJustSelected ? { scale: [1, 1.35, 1] } : {}}
+                                  transition={{ duration: 0.28, ease: 'easeOut' }}
                                   style={{
-                                    fontSize: '1rem',
+                                    fontSize: '1.05rem',
                                     lineHeight: 1,
                                     filter: selected ? `drop-shadow(${EMOJI_GLOWS[cat.icon]})` : 'none',
-                                    display: 'inline-block',
-                                    transition: 'transform 0.2s',
+                                    flexShrink: 0,
                                   }}
                                 >
                                   {cat.icon}
                                 </motion.span>
-                                <span>{cat.label}</span>
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat.label}</span>
                               </motion.button>
                             );
                           })}
@@ -560,11 +554,11 @@ export default function GiveKudosModal({
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'baseline',
-                            marginBottom: 10,
+                            alignItems: 'center',
+                            marginBottom: 13,
                           }}
                         >
-                          <label htmlFor="kudos-message" style={{ ...labelStyle, marginBottom: 0 }}>
+                          <label htmlFor="kudos-message" className="kudos-section-label" style={{ marginBottom: 0 }}>
                             Your Words
                           </label>
                           <span
@@ -763,7 +757,7 @@ export default function GiveKudosModal({
 
                       {/* KUDOS LIFESPAN PICKER */}
                       <motion.div variants={FORM_ITEM_VARIANTS}>
-                        <label style={labelStyle}>
+                        <label className="kudos-section-label">
                           Kudos Lifespan
                         </label>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginTop: 2 }}>
