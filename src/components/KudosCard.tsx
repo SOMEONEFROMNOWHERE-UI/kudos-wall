@@ -417,12 +417,15 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const [animating, setAnimating] = useState<Reaction | null>(null);
   const [hoveredReaction, setHoveredReaction] = useState<Reaction | null>(null);
   const [floatingPlusOnes, setFloatingPlusOnes] = useState<{ id: number; emoji: Reaction }[]>([]);
-  const [isHovered, setIsHovered] = useState(false);
   const [showConfetti, setShowConfetti] = useState(isNew);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editMessage, setEditMessage] = useState(kudos.message);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -484,8 +487,26 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
     }
   }, [live.reactions, kudos._id]);
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+    // Cap tilt at max 8 degrees
+    const rX = -(mouseY / (height / 2)) * 8;
+    const rY = (mouseX / (width / 2)) * 8;
+    setRotateX(rX);
+    setRotateY(rY);
+    setIsHovered(true);
+  };
+
   const handleMouseLeave = () => {
     setIsHovered(false);
+    setRotateX(0);
+    setRotateY(0);
   };
 
   const handleReaction = async (emoji: Reaction) => {
@@ -526,17 +547,19 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={isExpired
         ? { scale: 0, opacity: 0, height: 0, padding: 0, margin: 0, overflow: 'hidden' }
-        : { opacity: 1, y: 0, scale: 1 }
+        : { opacity: 1, y: 0, scale: 1, rotateX, rotateY }
       }
       transition={isExpired
         ? { duration: 0.5, ease: 'easeOut' }
         : {
-            duration: 0.5,
-            delay: index * 0.08,
-            ease: [0.34, 1.56, 0.64, 1], // Springy easing
+            opacity: { duration: 0.5, delay: index * 0.05 },
+            y: { duration: 0.5, delay: index * 0.05, ease: [0.34, 1.56, 0.64, 1] },
+            scale: { duration: 0.5, delay: index * 0.05, ease: [0.34, 1.56, 0.64, 1] },
+            rotateX: { type: 'spring', stiffness: 200, damping: 25 },
+            rotateY: { type: 'spring', stiffness: 200, damping: 25 },
           }
       }
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className="kudos-card-wrapper"
       style={{
@@ -547,13 +570,15 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
             ? `drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 16px ${accentColor}28)`
             : 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))',
         transition: 'filter 0.3s ease',
+        perspective: 1000,
+        transformStyle: 'preserve-3d',
       }}
     >
       {/* Glassy rotating border laser */}
       <div className={`kudos-card-glow-border ${VIBE_BORDER_CLASSES[kudos.category] || 'border-vibe-team'}`} />
 
       {/* Main card body with true glassmorphism */}
-      <div className="kudos-card-inner">
+      <div className="kudos-card-inner" style={{ transformStyle: 'preserve-3d' }}>
         {/* Confetti Burst */}
         {showConfetti && <ConfettiBurstMemo />}
 
@@ -572,7 +597,18 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         />
 
         {/* Subtle corner light tint */}
-        <div
+        <motion.div
+          animate={{
+            scale: [1, 1.15, 1],
+            opacity: [0.04, 0.08, 0.04],
+            x: [0, 8, 0],
+            y: [0, -8, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
           style={{
             position: 'absolute',
             top: -40,
@@ -581,14 +617,13 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
             height: 160,
             borderRadius: '50%',
             background: accentGradient,
-            opacity: 0.04,
             filter: 'blur(40px)',
             pointerEvents: 'none',
           }}
         />
 
         {/* ── Header row ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, transform: 'translateZ(15px)' }}>
           {/* Vibe tag top left badge */}
           <div
             style={{
@@ -604,6 +639,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
               color: tagInfo.text,
               border: `1px solid ${tagInfo.border}`,
               textShadow: `0 0 12px ${tagInfo.text}`,
+              transform: 'translateZ(10px)',
             }}
           >
             <span style={{ filter: `drop-shadow(0 0 4px ${tagInfo.text})` }}>
@@ -709,7 +745,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
         {/* ── Message ── */}
         {isEditing ? (
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, transform: 'translateZ(25px)' }}>
             <textarea
               className="input-field"
               value={editMessage}
@@ -738,25 +774,57 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
             </div>
           </div>
         ) : (
-          <p
-            style={{
-              fontSize: '18px',
-              fontStyle: 'italic',
-              fontWeight: 500,
-              color: '#E8E8F0',
-              borderLeft: '2px solid rgba(245,166,35,0.4)',
-              paddingLeft: '12px',
-              margin: '12px 0',
-              letterSpacing: '0.01em',
-              lineHeight: '1.6',
-            }}
-          >
-            {kudos.message}
-          </p>
+          <div style={{ position: 'relative', margin: '18px 0', paddingLeft: 16, transform: 'translateZ(25px)' }}>
+            {/* Translucent giant quote icon in the background */}
+            <span style={{
+              position: 'absolute',
+              left: -4,
+              top: -14,
+              fontSize: '3.5rem',
+              fontWeight: 800,
+              fontFamily: 'serif',
+              color: accentColor,
+              opacity: 0.12,
+              lineHeight: 1,
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}>
+              “
+            </span>
+            <p
+              style={{
+                fontSize: '1.05rem',
+                fontStyle: 'italic',
+                fontWeight: 500,
+                color: isHovered ? '#FFFFFF' : '#EDEDF0',
+                letterSpacing: '0.015em',
+                lineHeight: '1.65',
+                transition: 'color 0.3s ease',
+                position: 'relative',
+                zIndex: 1,
+              }}
+            >
+              {kudos.message}
+            </p>
+            {/* Shimmering left accent bar */}
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 4,
+                bottom: 4,
+                width: 3,
+                background: accentGradient,
+                borderRadius: 2,
+                boxShadow: isHovered ? `0 0 10px ${accentColor}` : 'none',
+                transition: 'box-shadow 0.3s ease',
+              }}
+            />
+          </div>
         )}
 
         {/* ── People row ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16, transform: 'translateZ(18px)' }}>
           {/* To */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <AvatarMemo name={kudos.receiver} />
@@ -781,7 +849,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginBottom: 12 }} />
 
         {/* ── Reaction Pills ── */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', transform: 'translateZ(15px)' }}>
           {REACTION_EMOJIS.map(emoji => {
             const active = myReactions[emoji];
             const count = reactions[emoji] || 0;
