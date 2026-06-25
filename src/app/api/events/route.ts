@@ -60,6 +60,10 @@ export function broadcastKudos(kudos: unknown) {
   broadcast('pulse', { todayCount: ssePulseToday.count });
 }
 
+export function broadcastMessage(message: unknown) {
+  broadcast('new_message', message);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userName = searchParams.get('user') || 'anonymous';

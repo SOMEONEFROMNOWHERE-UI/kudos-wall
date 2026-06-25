@@ -16,10 +16,14 @@ function getInitials(name: string) {
 }
 
 export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: NavbarProps) {
-  const { currentUser, totalCount, logout } = useKudos();
+  const { currentUser, totalCount, logout, live } = useKudos();
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [logoSparkles, setLogoSparkles] = useState<{ id: number; x: number; y: number; size: number }[]>([]);
+
+  const uniqueUsers = Array.from(new Set(live?.presenceUsers || []));
+  const others = uniqueUsers.filter(u => u !== currentUser?.name);
+  const hasOthersOnline = others.length >= 1;
 
   const handleLogoMouseEnter = () => {
     setIsLogoHovered(true);
@@ -42,7 +46,7 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
   };
 
   return (
-    <header className="navbar-header">
+    <header className={`navbar-header ${hasOthersOnline ? 'has-presence' : ''}`}>
       {/* SVG Gradient Definition for Flame */}
       <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }}>
         <defs>
