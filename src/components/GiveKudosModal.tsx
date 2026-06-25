@@ -93,6 +93,22 @@ const DEFAULT_THEME_VARIABLES: Record<string, string> = {
   '--vibe-accent-glow-dim': 'rgba(255, 255, 255, 0.01)',
 };
 
+const FORM_CONTAINER_VARIANTS = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const FORM_ITEM_VARIANTS = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 220, damping: 20 } as const }
+};
+
 export default function GiveKudosModal({
   isOpen,
   onClose,
@@ -261,7 +277,23 @@ export default function GiveKudosModal({
               }}
             >
               <div className="modal-glow-border" />
-              <div className="modal-inner">
+              <div className="modal-inner" style={{ position: 'relative', overflowX: 'hidden', overflowY: 'auto' }}>
+                {/* Static ambient colored glow in modal corner */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -100,
+                    right: -100,
+                    width: 320,
+                    height: 320,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, var(--vibe-accent, #FB923C) 0%, transparent 70%)',
+                    filter: 'blur(65px)',
+                    opacity: 0.06,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }}
+                />
                 <AnimatePresence mode="wait">
                 {step === 'success' ? (
                   /* ── Success State ── */
@@ -395,17 +427,22 @@ export default function GiveKudosModal({
                     />
 
                     {/* ── Form Body ── */}
-                    <form
+                    <motion.form
+                      variants={FORM_CONTAINER_VARIANTS}
+                      initial="hidden"
+                      animate="show"
                       onSubmit={handleSubmit}
                       style={{
                         padding: '28px 28px 28px 28px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: 28,
+                        position: 'relative',
+                        zIndex: 1,
                       }}
                     >
                       {/* WHO SHINES TODAY */}
-                      <div>
+                      <motion.div variants={FORM_ITEM_VARIANTS}>
                         <label htmlFor="kudos-receiver" style={labelStyle}>
                           Who Shines Today?
                         </label>
@@ -437,10 +474,10 @@ export default function GiveKudosModal({
                             }}
                           />
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* VIBE CHECK PILLS */}
-                      <div>
+                      <motion.div variants={FORM_ITEM_VARIANTS}>
                         <div style={labelStyle}>Vibe Check</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                           {CATEGORIES.map(cat => {
@@ -515,10 +552,10 @@ export default function GiveKudosModal({
                             );
                           })}
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* YOUR WORDS TEXTAREA */}
-                      <div>
+                      <motion.div variants={FORM_ITEM_VARIANTS}>
                         <div
                           style={{
                             display: 'flex',
@@ -656,74 +693,76 @@ export default function GiveKudosModal({
                             </motion.span>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* SEND ANONYMOUSLY TOGGLE */}
-                      <label
-                        htmlFor="kudos-anon"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                          alignSelf: 'flex-start',
-                        }}
-                      >
-                        {/* Animated toggle track */}
-                        <div
+                      <motion.div variants={FORM_ITEM_VARIANTS}>
+                        <label
+                          htmlFor="kudos-anon"
                           style={{
-                            width: 44,
-                            height: 24,
-                            borderRadius: 12,
-                            background: isAnonymous
-                              ? 'linear-gradient(135deg, var(--vibe-accent), var(--vibe-accent-secondary))'
-                              : 'rgba(255,255,255,0.1)',
-                            position: 'relative',
-                            transition: 'background 0.25s ease',
-                            flexShrink: 0,
-                            boxShadow: isAnonymous ? '0 0 10px var(--vibe-accent-glow)' : 'none',
-                          }}
-                        >
-                          {/* Knob */}
-                          <motion.div
-                            animate={{ x: isAnonymous ? 22 : 2 }}
-                            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            style={{
-                              position: 'absolute',
-                              top: 2,
-                              width: 20,
-                              height: 20,
-                              borderRadius: '50%',
-                              background: '#fff',
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                            }}
-                          />
-                        </div>
-                        <input
-                          type="checkbox"
-                          id="kudos-anon"
-                          checked={isAnonymous}
-                          onChange={() => setIsAnonymous(v => !v)}
-                          style={{ display: 'none' }}
-                        />
-                        <span
-                          style={{
-                            fontSize: '0.95rem',
-                            color: '#D1D5DB',
-                            fontWeight: 500,
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            gap: 6,
+                            gap: 12,
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            alignSelf: 'flex-start',
                           }}
                         >
-                          {isAnonymous ? <EyeOff size={15} style={{ color: 'var(--vibe-accent)' }} /> : <Eye size={15} style={{ color: 'rgba(255,255,255,0.4)' }} />}
-                          <span>{isAnonymous ? 'Sending anonymously' : 'Visible sender'}</span>
-                        </span>
-                      </label>
+                          {/* Animated toggle track */}
+                          <div
+                            style={{
+                              width: 44,
+                              height: 24,
+                              borderRadius: 12,
+                              background: isAnonymous
+                                ? 'linear-gradient(135deg, var(--vibe-accent), var(--vibe-accent-secondary))'
+                                : 'rgba(255,255,255,0.1)',
+                              position: 'relative',
+                              transition: 'background 0.25s ease',
+                              flexShrink: 0,
+                              boxShadow: isAnonymous ? '0 0 10px var(--vibe-accent-glow)' : 'none',
+                            }}
+                          >
+                            {/* Knob */}
+                            <motion.div
+                              animate={{ x: isAnonymous ? 22 : 2 }}
+                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                              style={{
+                                position: 'absolute',
+                                top: 2,
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                background: '#fff',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                              }}
+                            />
+                          </div>
+                          <input
+                            type="checkbox"
+                            id="kudos-anon"
+                            checked={isAnonymous}
+                            onChange={() => setIsAnonymous(v => !v)}
+                            style={{ display: 'none' }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '0.95rem',
+                              color: '#D1D5DB',
+                              fontWeight: 500,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            {isAnonymous ? <EyeOff size={15} style={{ color: 'var(--vibe-accent)' }} /> : <Eye size={15} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                            <span>{isAnonymous ? 'Sending anonymously' : 'Visible sender'}</span>
+                          </span>
+                        </label>
+                      </motion.div>
 
                       {/* KUDOS LIFESPAN PICKER */}
-                      <div>
+                      <motion.div variants={FORM_ITEM_VARIANTS}>
                         <label style={labelStyle}>
                           Kudos Lifespan
                         </label>
@@ -783,10 +822,11 @@ export default function GiveKudosModal({
                             );
                           })}
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* Gradient divider */}
-                      <div
+                      <motion.div
+                        variants={FORM_ITEM_VARIANTS}
                         style={{
                           height: 1,
                           background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
@@ -795,6 +835,7 @@ export default function GiveKudosModal({
 
                       {/* SEND KUDOS BUTTON */}
                       <motion.button
+                        variants={FORM_ITEM_VARIANTS}
                         type="submit"
                         disabled={!isValid || isSubmitting}
                         whileTap={isValid ? { scale: 0.98 } : {}}
@@ -856,7 +897,7 @@ export default function GiveKudosModal({
                           </>
                         )}
                       </motion.button>
-                    </form>
+                    </motion.form>
                   </motion.div>
                 )}
               </AnimatePresence>
