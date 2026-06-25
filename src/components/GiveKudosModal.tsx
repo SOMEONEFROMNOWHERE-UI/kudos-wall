@@ -111,6 +111,53 @@ export default function GiveKudosModal({
   const [lastSelected, setLastSelected] = useState<KudosCategory | null>(null);
   const receiverRef = useRef<HTMLInputElement>(null);
 
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isEnhanced, setIsEnhanced] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleEnhance = async () => {
+    if (isEnhancing || message.trim().length < 5) return;
+    setIsEnhancing(true);
+    const rawKudosText = message;
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: "You are a hype writer for a team recognition platform. Rewrite the user's raw kudos message into something punchy, warm, and specific. Keep it under 2 sentences. Use the same language/tone as the input. Never add fake details. Return ONLY the rewritten message, no quotes, no explanation.",
+          messages: [{ role: "user", content: rawKudosText }]
+        })
+      });
+      if (!response.ok) {
+        throw new Error("API request failed");
+      }
+      const data = await response.json();
+      if (data && data.content && data.content[0] && data.content[0].text) {
+        let enhanced = data.content[0].text.trim();
+        // Remove leading and trailing quotes if present
+        if (enhanced.startsWith('"') && enhanced.endsWith('"')) {
+          enhanced = enhanced.slice(1, -1);
+        } else if (enhanced.startsWith("'") && enhanced.endsWith("'")) {
+          enhanced = enhanced.slice(1, -1);
+        }
+        setMessage(enhanced);
+        setIsEnhanced(true);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (error) {
+      console.error("Enhancement failed:", error);
+      setToastMessage("Couldn't enhance right now");
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 3000);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setReceiver(prefillReceiver);
@@ -121,6 +168,9 @@ export default function GiveKudosModal({
       setStep('form');
       setIsSubmitting(false);
       setLastSelected(null);
+      setIsEnhanced(false);
+      setIsEnhancing(false);
+      setToastMessage(null);
       setTimeout(() => receiverRef.current?.focus(), 150);
     }
   }, [isOpen, prefillReceiver, prefillMessage]);
@@ -471,12 +521,96 @@ export default function GiveKudosModal({
                           id="kudos-message"
                           className="kudos-modal-input"
                           value={message}
-                          onChange={e => setMessage(e.target.value)}
+                          onChange={e => {
+                            setMessage(e.target.value);
+                            if (e.target.value.trim() === '') {
+                              setIsEnhanced(false);
+                            }
+                          }}
                           placeholder="Be specific — what exactly did they do that made a difference?"
                           rows={4}
                           maxLength={2000}
                           required
                         />
+                        {/* Kudos Auto-Enhancer */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, minHeight: 32 }}>
+                          <div>
+                            {message.trim().length >= 5 && (
+                              <motion.button
+                                type="button"
+                                onClick={handleEnhance}
+                                disabled={isEnhancing}
+                                whileHover={!isEnhancing ? {
+                                  scale: 1.02,
+                                  boxShadow: '0 0 10px rgba(167, 139, 250, 0.4)',
+                                  borderColor: 'rgba(167, 139, 250, 0.6)',
+                                  backgroundColor: 'rgba(167, 139, 250, 0.15)',
+                                } : {}}
+                                whileTap={!isEnhancing ? { scale: 0.98 } : {}}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '6px 12px',
+                                  borderRadius: 8,
+                                  border: '1px solid rgba(167, 139, 250, 0.3)',
+                                  backgroundColor: 'rgba(167, 139, 250, 0.05)',
+                                  color: '#A78BFA', // Purple accent
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  cursor: isEnhancing ? 'not-allowed' : 'pointer',
+                                  transition: 'border-color 0.2s ease, background-color 0.2s ease',
+                                  opacity: isEnhancing ? 0.7 : 1,
+                                }}
+                              >
+                                {isEnhancing ? (
+                                  <>
+                                    <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center', marginRight: 4 }}>
+                                      <motion.span
+                                        animate={{ scale: [0.6, 1.2, 0.6], opacity: [0.4, 1, 0.4] }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut', times: [0, 0.5, 1] }}
+                                        style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#A78BFA', display: 'inline-block' }}
+                                      />
+                                      <motion.span
+                                        animate={{ scale: [0.6, 1.2, 0.6], opacity: [0.4, 1, 0.4] }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut', delay: 0.2, times: [0, 0.5, 1] }}
+                                        style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#A78BFA', display: 'inline-block' }}
+                                      />
+                                      <motion.span
+                                        animate={{ scale: [0.6, 1.2, 0.6], opacity: [0.4, 1, 0.4] }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: 'easeInOut', delay: 0.4, times: [0, 0.5, 1] }}
+                                        style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#A78BFA', display: 'inline-block' }}
+                                      />
+                                    </span>
+                                    Enhancing…
+                                  </>
+                                ) : isEnhanced ? (
+                                  <>
+                                    <span>🔄</span> Try Again
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>✨</span> Enhance with AI
+                                  </>
+                                )}
+                              </motion.button>
+                            )}
+                          </div>
+                          
+                          {isEnhanced && (
+                            <motion.span
+                              initial={{ opacity: 0, x: -5 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#9CA3AF',
+                                fontStyle: 'italic',
+                              }}
+                            >
+                              AI enhanced · tap to edit
+                            </motion.span>
+                          )}
+                        </div>
                       </div>
 
                       {/* SEND ANONYMOUSLY TOGGLE */}
@@ -670,6 +804,37 @@ export default function GiveKudosModal({
                         )}
                       </motion.button>
                     </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Toast Notification */}
+              <AnimatePresence>
+                {toastMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 12 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      position: 'absolute',
+                      bottom: 24,
+                      left: 24,
+                      right: 24,
+                      background: 'rgba(239, 68, 68, 0.95)',
+                      color: '#ffffff',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      textAlign: 'center',
+                      zIndex: 999,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {toastMessage}
                   </motion.div>
                 )}
               </AnimatePresence>

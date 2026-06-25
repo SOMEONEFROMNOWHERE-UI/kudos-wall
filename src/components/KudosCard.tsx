@@ -6,6 +6,7 @@ import { useKudos } from '@/context/KudosContext';
 import type { KudosData } from '@/types';
 import { CATEGORIES } from '@/types';
 import { Pencil, Trash2, X, Check } from 'lucide-react';
+import { getAvatarColor, getInitials } from '@/lib/utils';
 
 interface KudosCardProps {
   kudos: KudosData;
@@ -57,24 +58,6 @@ function timeAgo(dateStr: string | undefined): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function getInitials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
-// Consistent user avatar HSL color generator
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return {
-    base: `hsl(${hue}, 70%, 60%)`,
-    ring: `hsla(${hue}, 70%, 60%, 0.2)`,
-    hoverRing: `hsla(${hue}, 70%, 60%, 0.4)`,
-    text: `hsl(${hue}, 80%, 15%)`,
-  };
-}
 
 function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   const colors = getAvatarColor(name);

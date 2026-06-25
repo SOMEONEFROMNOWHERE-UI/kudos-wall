@@ -51,7 +51,7 @@ export default function KudosFeed() {
           padding: `${hasOthersOnline ? 'var(--space-3)' : 'var(--space-4)'} var(--space-4)`,
           paddingBottom: 120,
           display: 'grid',
-          gridTemplateColumns: kudosList.length > 0 ? '1fr 280px' : '1fr',
+          gridTemplateColumns: kudosList.length > 0 ? '1fr 320px' : '1fr',
           gap: 'var(--space-5)',
           alignItems: 'start',
         }}
@@ -81,7 +81,7 @@ export default function KudosFeed() {
           {/* Mobile: Glowing Right Now pill */}
           {kudosList.length > 0 && (
             <div className="mobile-only" style={{ marginBottom: 'var(--space-3)' }}>
-              <GlowingRightNow />
+              <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} />
             </div>
           )}
 
@@ -189,44 +189,11 @@ export default function KudosFeed() {
         {/* ── Right: Sidebar (desktop only) ── */}
         {kudosList.length > 0 && (
           <aside className="desktop-only" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <GlowingRightNow />
+            <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} />
           </aside>
         )}
       </div>
 
-      {/* Desktop FAB — breathing glow, fixed bottom-right */}
-      {kudosList.length > 0 && (
-        <motion.button
-          className="desktop-only"
-          onClick={() => setIsModalOpen(true)}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.93 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          aria-label="Give kudos"
-          title="Give kudos"
-          style={{
-            position: 'fixed',
-            bottom: 'var(--space-5)',
-            right: 'var(--space-5)',
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'var(--accent)',
-            color: 'var(--accent-text-on)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            border: 'none',
-            cursor: 'pointer',
-            animation: 'fab-breathe 2s ease-in-out infinite',
-          }}
-        >
-          <Plus size={22} strokeWidth={2.5} />
-        </motion.button>
-      )}
 
       {/* Desktop pulse — bottom-left ambient */}
       <div

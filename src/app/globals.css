@@ -924,6 +924,9 @@ textarea.input-field {
   transform-style: preserve-3d;
   perspective: 1000px;
   overflow: visible;
+}
+
+.kudos-card-wrapper:hover {
   will-change: transform;
 }
 
@@ -942,7 +945,6 @@ textarea.input-field {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   z-index: 2;
   overflow: visible;
-  will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
@@ -952,6 +954,7 @@ textarea.input-field {
     0 15px 45px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
     0 0 35px rgba(245, 166, 35, 0.1);
+  will-change: transform, opacity;
 }
 
 /* Base glassy highlight reflection border */
@@ -1014,14 +1017,13 @@ textarea.input-field {
     #c247ac 75%,
     #6750a2 100%
   );
-  animation: borderRotateNew 6s linear infinite;
-  transition: animation-duration 0.3s ease;
+  animation: none; /* No animation in base state to prevent rendering lag */
   transform-origin: center center;
-  will-change: transform; /* Prompts browser to run rotation entirely on the GPU */
 }
 
 .kudos-card-wrapper:hover .kudos-card-glow-border::before {
-  animation-duration: 3s;
+  animation: borderRotateNew 3.5s linear infinite;
+  will-change: transform; /* Prompts browser to run rotation entirely on the GPU when hovered */
 }
 
 
@@ -1084,13 +1086,18 @@ textarea.input-field {
     #c247ac 75%,
     #6750a2 100%
   );
-  animation: borderRotateNew 4s linear infinite;
+  animation: none; /* No animation in base state to prevent rendering lag */
   transform-origin: center center;
 }
 
 .nav-btn-glassy:hover .nav-btn-glow-border {
   padding: 1.8px;
   opacity: 1;
+}
+
+.nav-btn-glassy:hover .nav-btn-glow-border::before {
+  animation: borderRotateNew 4s linear infinite;
+  will-change: transform;
 }
 
 /* ============================================================
@@ -1490,4 +1497,57 @@ textarea.kudos-modal-input {
   min-height: 120px;
   resize: none;
   line-height: 1.6;
+}
+
+/* ============================================================
+   NAVBAR HEADER GLOW BORDER (v12)
+   ============================================================ */
+
+.navbar-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-navbar);
+  padding: 0 var(--space-4);
+  background: rgba(11, 11, 15, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background-color 0.3s ease, border-bottom-color 0.3s ease;
+}
+
+/* Continuous high-performance horizontal glowing border gradient */
+.navbar-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, 
+    rgba(103, 80, 162, 0.1) 0%, 
+    #03b3c3 25%, 
+    #e8b84b 50%, 
+    #c247ac 75%, 
+    #03b3c3 90%,
+    rgba(103, 80, 162, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: flowBorderLR 8s linear infinite;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 1.5px rgba(3, 179, 195, 0.45));
+  transition: opacity 0.3s ease, filter 0.3s ease, height 0.3s ease;
+  pointer-events: none;
+}
+
+/* Intensify and speed up glow on navbar hover */
+.navbar-header:hover {
+  background: rgba(15, 15, 21, 0.92);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-header:hover::after {
+  height: 2px;
+  opacity: 1;
+  animation: flowBorderLR 3.5s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(3, 179, 195, 0.8)) drop-shadow(0 0 1px #03b3c3);
 }

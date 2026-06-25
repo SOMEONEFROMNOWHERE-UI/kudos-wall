@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, UserPlus, Users, Trash2 } from 'lucide-react';
 import { useKudos } from '@/context/KudosContext';
+import { getAvatarColor, getInitials } from '@/lib/utils';
 
 interface FriendsPanelProps {
   isOpen: boolean;
@@ -17,15 +18,9 @@ interface Group {
   createdBy: string;
 }
 
-function getInitials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
-const AVATAR_COLORS = ['#E8B84B', '#6FCF97', '#56B4E8', '#A78BFA', '#FF6B4A'];
-
-function FriendAvatar({ name, isOnline, index }: { name: string; isOnline: boolean; index: number }) {
+function FriendAvatar({ name, isOnline }: { name: string; isOnline: boolean }) {
   const initials = getInitials(name);
-  const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const colors = getAvatarColor(name);
   return (
     <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
       {isOnline && (
@@ -49,14 +44,14 @@ function FriendAvatar({ name, isOnline, index }: { name: string; isOnline: boole
           width: '100%',
           height: '100%',
           borderRadius: '50%',
-          background: isOnline ? 'rgba(52, 211, 153, 0.08)' : `${color}14`,
-          border: `1.5px solid ${isOnline ? '#34d399' : `${color}33`}`,
+          background: colors.base,
+          border: '1.5px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '0.72rem',
           fontWeight: 700,
-          color: isOnline ? '#34d399' : color,
+          color: colors.text,
           boxShadow: isOnline ? '0 0 10px rgba(52, 211, 153, 0.2)' : 'none',
         }}
       >
@@ -82,23 +77,23 @@ function FriendAvatar({ name, isOnline, index }: { name: string; isOnline: boole
   );
 }
 
-function GroupAvatar({ name, index }: { name: string; index: number }) {
+function GroupAvatar({ name }: { name: string }) {
   const initials = getInitials(name);
-  const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const colors = getAvatarColor(name);
   return (
     <div
       style={{
         width: 36,
         height: 36,
         borderRadius: '50%',
-        background: `linear-gradient(135deg, ${color}1e, ${color}08)`,
-        border: `1.5px solid ${color}33`,
+        background: colors.base,
+        border: '1.5px solid rgba(255, 255, 255, 0.1)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '0.72rem',
         fontWeight: 700,
-        color: color,
+        color: colors.text,
         flexShrink: 0,
       }}
     >
@@ -757,7 +752,7 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                                <FriendAvatar name={name} isOnline={isOnline} index={i} />
+                                <FriendAvatar name={name} isOnline={isOnline} />
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontWeight: 600 }}>
                                     {name}
@@ -838,7 +833,7 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                              <GroupAvatar name={group.name} index={i} />
+                              <GroupAvatar name={group.name} />
                               <div>
                                 <div style={{ fontSize: 'var(--text-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
                                   {group.name}

@@ -42,18 +42,7 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
   };
 
   return (
-    <header
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 'var(--z-navbar)' as unknown as number,
-        borderBottom: '1px solid var(--surface-border)',
-        padding: '0 var(--space-4)',
-        background: 'rgba(11,11,15,0.88)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-      }}
-    >
+    <header className="navbar-header">
       {/* SVG Gradient Definition for Flame */}
       <svg width="0" height="0" style={{ position: 'absolute', pointerEvents: 'none' }}>
         <defs>
