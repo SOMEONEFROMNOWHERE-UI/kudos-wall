@@ -201,12 +201,29 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
 
   const currentGroup = chatTarget?.isGroup ? groups.find(g => g._id === chatTarget.id) : null;
 
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch('/api/groups');
+      if (res.ok) setGroups(await res.json());
+    } catch { /* ignore */ }
+  };
+
+  const [friendRequests, setFriendRequests] = useState<any[]>([]);
+
+  const fetchFriendRequests = async () => {
+    try {
+      const res = await fetch('/api/friend-requests');
+      if (res.ok) setFriendRequests(await res.json());
+    } catch { /* ignore */ }
+  };
+
   // Lock body scroll when panel is open & fetch updates
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       fetchFriends();
       fetchGroups();
+      fetchFriendRequests();
     } else {
       document.body.style.overflow = '';
       setChatTarget(null);
@@ -230,37 +247,43 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
     } catch { /* ignore */ }
   };
 
-  const fetchGroups = async () => {
-    try {
-      const res = await fetch('/api/groups');
-      if (res.ok) setGroups(await res.json());
-    } catch { /* ignore */ }
-  };
-
   const addFriend = async () => {
     if (!addName.trim() || isLoading) return;
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/friends', {
+      const res = await fetch('/api/friend-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ friendName: addName.trim() }),
+        body: JSON.stringify({ receiverId: addName.trim() }),
       });
       if (res.ok) {
-        setSuccess(`${addName.trim()} added!`);
+        setSuccess(`Request sent to ${addName.trim()}!`);
         setAddName('');
-        fetchFriends();
         setTimeout(() => setSuccess(''), 2000);
       } else {
         const d = await res.json();
-        setError(d.error || 'Failed to add');
+        setError(d.error || 'Failed to send request');
       }
     } catch {
       setError('Network error');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRequest = async (requestId: string, action: 'accepted' | 'declined') => {
+    try {
+      const res = await fetch('/api/friend-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action }),
+      });
+      if (res.ok) {
+        fetchFriendRequests();
+        if (action === 'accepted') fetchFriends();
+      }
+    } catch { /* ignore */ }
   };
 
   const removeFriend = async (friendName: string) => {
@@ -1125,6 +1148,78 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                 >
                   {tab === 'friends' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {/* PENDING REQUESTS SECTION */}
+                      {friendRequests.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{
+                            fontSize: '11px',
+                            color: 'var(--accent)',
+                            marginBottom: 'var(--space-2)',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}>
+                            Pending Requests ({friendRequests.length})
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {friendRequests.map(req => (
+                              <div
+                                key={req._id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '10px 12px',
+                                  borderRadius: 'var(--radius-md)',
+                                  background: 'rgba(232, 184, 75, 0.05)',
+                                  border: '1px solid rgba(232, 184, 75, 0.2)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                                  <FriendAvatar name={req.senderId} isOnline={false} />
+                                  <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontWeight: 600 }}>
+                                    {req.senderId}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button
+                                    onClick={() => handleRequest(req._id, 'accepted')}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      background: 'rgba(52, 211, 153, 0.15)',
+                                      color: '#34d399',
+                                      border: '1px solid rgba(52, 211, 153, 0.3)',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleRequest(req._id, 'declined')}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      background: 'rgba(255, 107, 74, 0.15)',
+                                      color: 'var(--cat-fire)',
+                                      border: '1px solid rgba(255, 107, 74, 0.3)',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* YOUR FRIENDS SECTION */}
                       <div style={{
                         fontSize: '11px',
                         color: 'var(--text-secondary)',

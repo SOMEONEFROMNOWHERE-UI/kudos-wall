@@ -44,6 +44,16 @@ const VIBE_TAG_STYLING: Record<string, { bg: string; text: string; border: strin
   '⭐': { bg: 'rgba(245,166,35,0.12)', text: '#F5A623', border: 'rgba(245,166,35,0.3)', label: 'STAR' },
 };
 
+const BADGE_MAP: Record<string, { emoji: string; label: string; color: string }> = {
+  'CLUTCH_MOVE': { emoji: '⚡', label: 'Clutch', color: '#eab308' },
+  'BIG_BRAIN': { emoji: '🧠', label: 'Big Brain', color: '#8b5cf6' },
+  'CARRIED_TEAM': { emoji: '🏋️', label: 'Carried', color: '#ef4444' },
+  'GROWTH_MODE': { emoji: '🌱', label: 'Growth', color: '#22c55e' },
+  'ON_FIRE': { emoji: '🔥', label: 'On Fire', color: '#f97316' },
+  'ROCKET': { emoji: '🚀', label: 'Rocket', color: '#3b82f6' },
+  'GOOD_VIBES': { emoji: '✨', label: 'Vibes', color: '#ec4899' },
+};
+
 function timeAgo(dateStr: string | undefined): string {
   if (!dateStr) return '';
   const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
@@ -624,28 +634,54 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
         {/* ── Header row ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, transform: 'translateZ(15px)' }}>
-          {/* Vibe tag top left badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              borderRadius: '999px',
-              padding: '4px 12px',
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              background: tagInfo.bg,
-              color: tagInfo.text,
-              border: `1px solid ${tagInfo.border}`,
-              textShadow: `0 0 12px ${tagInfo.text}`,
-              transform: 'translateZ(10px)',
-            }}
-          >
-            <span style={{ filter: `drop-shadow(0 0 4px ${tagInfo.text})` }}>
-              {kudos.category}
-            </span>
-            <span>{tagInfo.label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {/* Vibe tag top left badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: '999px',
+                padding: '4px 12px',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                background: tagInfo.bg,
+                color: tagInfo.text,
+                border: `1px solid ${tagInfo.border}`,
+                textShadow: `0 0 12px ${tagInfo.text}`,
+                transform: 'translateZ(10px)',
+              }}
+            >
+              <span style={{ filter: `drop-shadow(0 0 4px ${tagInfo.text})` }}>
+                {kudos.category}
+              </span>
+              <span>{tagInfo.label}</span>
+            </div>
+
+            {/* AI Vibe Badge */}
+            {kudos.badge && BADGE_MAP[kudos.badge] && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  borderRadius: '999px',
+                  padding: '3px 8px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: BADGE_MAP[kudos.badge].color,
+                  border: `1px solid ${BADGE_MAP[kudos.badge].color}40`,
+                  boxShadow: `0 0 8px ${BADGE_MAP[kudos.badge].color}20`,
+                }}
+              >
+                <span>{BADGE_MAP[kudos.badge].emoji}</span>
+                <span>{BADGE_MAP[kudos.badge].label}</span>
+                <span style={{ fontSize: '8px', opacity: 0.5, marginLeft: 4 }}>✦ AI</span>
+              </div>
+            )}
           </div>
 
           {/* Right actions and timestamp */}

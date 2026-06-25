@@ -7,6 +7,7 @@ export interface IKudos extends Document {
   category: string;
   isAnonymous: boolean;
   expiresAt?: Date | null;
+  badge?: string;
   createdAt: Date;
 }
 
@@ -43,6 +44,10 @@ const KudosSchema = new Schema<IKudos>(
     expiresAt: {
       type: Date,
       default: null,
+    },
+    badge: {
+      type: String,
+      default: 'GOOD_VIBES',
     },
   },
   {

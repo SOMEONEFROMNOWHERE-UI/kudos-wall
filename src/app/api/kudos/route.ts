@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     const db = await dbConnect();
 
     const body = await request.json();
-    const { sender, receiver, message, category, isAnonymous, duration } = body;
+    const { sender, receiver, message, category, isAnonymous, duration, badge } = body;
 
     // Validation
     if (!sender || !receiver || !message || !category) {
@@ -137,6 +137,7 @@ export async function POST(request: Request) {
       category,
       isAnonymous: !!isAnonymous,
       expiresAt: expiresAtVal,
+      badge: badge || 'GOOD_VIBES',
     });
 
     // Update sender's streak

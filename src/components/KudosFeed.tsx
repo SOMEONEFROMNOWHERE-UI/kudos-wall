@@ -14,6 +14,7 @@ import WeeklySpotlight from './WeeklySpotlight';
 import GlowingRightNow from './GlowingRightNow';
 import FriendsPanel from './FriendsPanel';
 import EchoInsight from './EchoInsight';
+import HallOfFame from './HallOfFame';
 import { Plus } from 'lucide-react';
 
 export default function KudosFeed() {
@@ -170,19 +171,22 @@ export default function KudosFeed() {
               </motion.div>
             </motion.div>
           ) : (
-            /* Kudos Masonry Grid */
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: 'var(--space-3)',
-                alignItems: 'start',
-              }}
-            >
+            <>
+              <HallOfFame />
+              {/* Kudos Masonry Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                  gap: 'var(--space-3)',
+                  alignItems: 'start',
+                }}
+              >
               {kudosList.map((kudos, i) => (
                 <KudosCard key={kudos._id || i} kudos={kudos} index={i} />
               ))}
             </div>
+            </>
           )}
         </main>
 

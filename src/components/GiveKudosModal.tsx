@@ -6,6 +6,7 @@ import { X, User, MessageSquare, Sparkles, Eye, EyeOff, Infinity as InfinityIcon
 import { useKudos } from '@/context/KudosContext';
 import type { KudosCategory } from '@/types';
 import { CATEGORIES } from '@/types';
+import classifyKudos from '@/lib/classifyKudos';
 
 interface GiveKudosModalProps {
   isOpen: boolean;
@@ -131,6 +132,7 @@ export default function GiveKudosModal({
 
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isEnhanced, setIsEnhanced] = useState(false);
+  const [isVibing, setIsVibing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const handleEnhance = async () => {
@@ -195,7 +197,18 @@ export default function GiveKudosModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!receiver.trim() || !message.trim() || !category || !currentUser || isSubmitting) return;
+    if (!receiver.trim() || !message.trim() || !category || !currentUser || isSubmitting || isVibing) return;
+    
+    setIsVibing(true);
+    const classification = await classifyKudos(message.trim());
+    setIsVibing(false);
+
+    if (!classification.passed) {
+      setToastMessage('Message blocked: ' + (classification.reason || 'inappropriate content'));
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await addKudos({
@@ -205,6 +218,7 @@ export default function GiveKudosModal({
         category,
         isAnonymous,
         duration,
+        badge: classification.badge,
       });
       setStep('success');
       setTimeout(() => onClose(), 1800);
@@ -831,7 +845,7 @@ export default function GiveKudosModal({
                       <motion.button
                         variants={FORM_ITEM_VARIANTS}
                         type="submit"
-                        disabled={!isValid || isSubmitting}
+                        disabled={!isValid || isSubmitting || isVibing}
                         whileTap={isValid ? { scale: 0.98 } : {}}
                         onHoverStart={() => setArrowHovered(true)}
                         onHoverEnd={() => setArrowHovered(false)}
@@ -867,7 +881,7 @@ export default function GiveKudosModal({
                             : {}),
                         }}
                       >
-                        {isSubmitting ? (
+                        {isSubmitting || isVibing ? (
                           <>
                             <motion.span
                               animate={{ rotate: 360 }}
@@ -876,7 +890,7 @@ export default function GiveKudosModal({
                             >
                               ✦
                             </motion.span>
-                            Sending…
+                            {isVibing ? '✨ Checking vibes…' : 'Sending…'}
                           </>
                         ) : (
                           <>

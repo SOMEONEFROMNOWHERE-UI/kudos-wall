@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useKudos } from '@/context/KudosContext';
 import { getAvatarColor, getInitials } from '@/lib/utils';
 import { Flame, Sparkles, Activity, Plus } from 'lucide-react';
+import TeamHeartbeat from './TeamHeartbeat';
 
 interface TrendingPerson {
   name: string;
@@ -261,6 +262,15 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                 )}
               </div>
             </div>
+
+            {/* Premium Gold/Glass Separator Divider */}
+            <div style={{
+              height: 1,
+              background: 'linear-gradient(to right, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.08) 20%, rgba(232, 184, 75, 0.15) 50%, rgba(255, 255, 255, 0.08) 80%, rgba(255, 255, 255, 0.01) 100%)'
+            }} />
+
+            {/* Team Heartbeat Graph (Only shows if in group) */}
+            <TeamHeartbeat />
 
             {/* Premium Gold/Glass Separator Divider */}
             <div style={{

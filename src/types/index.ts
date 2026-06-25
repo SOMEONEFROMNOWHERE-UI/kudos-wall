@@ -9,6 +9,7 @@ export interface KudosData {
   isAnonymous: boolean;
   duration?: number;
   expiresAt?: string | null;
+  badge?: string;
   createdAt?: string;
 }
 
