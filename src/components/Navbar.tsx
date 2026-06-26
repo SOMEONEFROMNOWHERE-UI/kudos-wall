@@ -9,13 +9,14 @@ interface NavbarProps {
   onOpenJar: () => void;
   onOpenComposer: () => void;
   onOpenFriends?: () => void;
+  onOpenProfile?: () => void;
 }
 
 function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: NavbarProps) {
+export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends, onOpenProfile }: NavbarProps) {
   const { currentUser, totalCount, logout, live } = useKudos();
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
@@ -302,6 +303,7 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends }: Nav
                 className="nav-btn-glassy"
                 onMouseEnter={() => setIsAvatarHovered(true)}
                 onMouseLeave={() => setIsAvatarHovered(false)}
+                onClick={onOpenProfile}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

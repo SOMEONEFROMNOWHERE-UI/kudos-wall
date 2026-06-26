@@ -4,6 +4,8 @@ export interface IUser extends Document {
   name: string;
   streak: number;
   lastKudosGiven: Date | null;
+  bio?: string;
+  title?: string;
   createdAt: Date;
 }
 
@@ -25,6 +27,16 @@ const UserSchema = new Schema<IUser>(
     lastKudosGiven: {
       type: Date,
       default: null,
+    },
+    bio: {
+      type: String,
+      maxlength: [160, 'Bio cannot exceed 160 characters'],
+      default: '',
+    },
+    title: {
+      type: String,
+      maxlength: [50, 'Title cannot exceed 50 characters'],
+      default: '',
     },
   },
   {

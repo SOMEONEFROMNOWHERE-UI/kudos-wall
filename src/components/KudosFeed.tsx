@@ -15,6 +15,7 @@ import GlowingRightNow from './GlowingRightNow';
 import FriendsPanel from './FriendsPanel';
 import EchoInsight from './EchoInsight';
 import HallOfFame from './HallOfFame';
+import ProfileModal from './ProfileModal';
 import { Plus } from 'lucide-react';
 
 export default function KudosFeed() {
@@ -22,6 +23,7 @@ export default function KudosFeed() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isJarOpen, setIsJarOpen] = useState(false);
   const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const uniqueUsers = Array.from(new Set(live?.presenceUsers || []));
   const others = uniqueUsers.filter(u => u !== currentUser?.name);
@@ -37,6 +39,12 @@ export default function KudosFeed() {
         onOpenJar={() => setIsJarOpen(true)}
         onOpenComposer={() => setIsModalOpen(true)}
         onOpenFriends={() => setIsFriendsPanelOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
 
       {/* Live presence */}

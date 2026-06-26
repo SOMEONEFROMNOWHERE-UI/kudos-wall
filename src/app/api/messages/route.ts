@@ -127,3 +127,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await getServerSession();
+  if (!session?.user?.name) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const messageId = searchParams.get('messageId');
+
+    if (!messageId) {
+      return NextResponse.json({ error: 'messageId is required' }, { status: 400 });
+    }
+
+    const userId = session.user.name;
+    const db = await dbConnect();
+
+    if (!db) {
+      const idx = memoryMessages.findIndex(m => m._id === messageId && m.senderId === userId);
+      if (idx !== -1) {
+        memoryMessages.splice(idx, 1);
+        return NextResponse.json({ success: true });
+      }
+      return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
+    }
+
+    const result = await ChatMessage.deleteOne({ _id: messageId, senderId: userId });
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Messages DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 });
+  }
+}

@@ -252,18 +252,19 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/friend-requests', {
+      const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: addName.trim() }),
+        body: JSON.stringify({ friendName: addName.trim() }),
       });
       if (res.ok) {
-        setSuccess(`Request sent to ${addName.trim()}!`);
+        setSuccess(`${addName.trim()} added!`);
         setAddName('');
+        fetchFriends();
         setTimeout(() => setSuccess(''), 2000);
       } else {
         const d = await res.json();
-        setError(d.error || 'Failed to send request');
+        setError(d.error || 'Failed to add friend');
       }
     } catch {
       setError('Network error');
@@ -358,6 +359,17 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const res = await fetch(`/api/messages?messageId=${encodeURIComponent(messageId)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setMessages(prev => prev.filter(m => m._id !== messageId));
+      }
+    } catch { /* ignore */ }
   };
 
   const addGroupMember = async (friendName: string) => {
@@ -690,31 +702,57 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                             alignItems: isMe ? 'flex-end' : 'flex-start',
                             maxWidth: '85%',
                             alignSelf: isMe ? 'flex-end' : 'flex-start',
+                            position: 'relative',
                           }}
+                          className="group"
                         >
                           {!isMe && chatTarget.isGroup && (
                             <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: 2, paddingLeft: 4 }}>
                               {msg.senderId}
                             </span>
                           )}
-                          <div
-                            style={{
-                              background: isMe
-                                ? 'linear-gradient(135deg, rgba(232, 184, 75, 0.25) 0%, rgba(232, 184, 75, 0.15) 100%)'
-                                : 'rgba(255, 255, 255, 0.05)',
-                              border: isMe
-                                ? '1px solid rgba(232, 184, 75, 0.3)'
-                                : '1px solid rgba(255, 255, 255, 0.08)',
-                              borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                              padding: '10px 14px',
-                              color: 'var(--text-primary)',
-                              fontSize: 'var(--text-body)',
-                              lineHeight: 1.4,
-                              wordBreak: 'break-word',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            }}
-                          >
-                            {msg.content}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                            <div
+                              style={{
+                                background: isMe
+                                  ? 'linear-gradient(135deg, rgba(232, 184, 75, 0.25) 0%, rgba(232, 184, 75, 0.15) 100%)'
+                                  : 'rgba(255, 255, 255, 0.05)',
+                                border: isMe
+                                  ? '1px solid rgba(232, 184, 75, 0.3)'
+                                  : '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                                padding: '10px 14px',
+                                color: 'var(--text-primary)',
+                                fontSize: 'var(--text-body)',
+                                lineHeight: 1.4,
+                                wordBreak: 'break-word',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              {msg.content}
+                            </div>
+                            {isMe && msg._id && (
+                              <button
+                                onClick={() => deleteMessage(msg._id)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'rgba(255, 107, 74, 0.6)',
+                                  cursor: 'pointer',
+                                  padding: 4,
+                                  opacity: 0,
+                                  transition: 'opacity 0.2s',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title="Delete message"
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
                           </div>
                           <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', marginTop: 2, padding: '0 4px' }}>
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
