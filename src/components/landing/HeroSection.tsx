@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { Zap, Sparkles, Gift } from 'lucide-react';
+import { Zap, Sparkles, Gift, Trophy, Users } from 'lucide-react';
 import { useKudos } from '@/context/KudosContext';
 import type { HyperspeedHandle } from '@/components/Hyperspeed/Hyperspeed';
 import AnimatedParticles from './AnimatedParticles';
@@ -254,14 +254,14 @@ export default function HeroSection() {
                 fontWeight: 400,
               }}
             >
-              Boost morale, celebrate wins, and build a culture of appreciation at hyperspeed. Ensure every contribution is seen, valued, and instantly rewarded.
+              Empower your team with real-time recognition. Cultivate a culture of appreciation where every achievement is instantly celebrated and visibly rewarded.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {[
-                { icon: <Zap size={20} color="var(--cat-rocket)" />, title: 'Real-time peer-to-peer recognition', desc: 'Instantly celebrate wins with beautiful animated reactions and instant feedback.', glow: 'rgba(236, 72, 153, 0.15)' },
-                { icon: <Sparkles size={20} color="var(--cat-gem)" />, title: 'AI-powered team insights', desc: 'Discover hidden connections, track contributions, and gain actionable analytics across your organization.', glow: 'rgba(56, 189, 248, 0.15)' },
-                { icon: <Gift size={20} color="#a855f7" />, title: 'Custom Rewards & Perks', desc: 'Exchange your well-earned kudos for real-world rewards, gift cards, and exclusive company swag.', glow: 'rgba(168, 85, 247, 0.15)' },
+                { icon: <Sparkles size={20} color="var(--cat-gem)" />, title: 'AI-Driven Sentiment Analysis', desc: 'Automatically classify peer feedback with intelligent vibe tags and dynamic performance badges.', glow: 'rgba(56, 189, 248, 0.15)' },
+                { icon: <Trophy size={20} color="#F59E0B" />, title: 'Real-Time Leaderboards', desc: 'Monitor engagement metrics, recognize top contributors, and track trending posts instantly.', glow: 'rgba(245, 158, 11, 0.15)' },
+                { icon: <Users size={20} color="#a855f7" />, title: 'Secure Team Communication', desc: 'Connect with colleagues through live presence indicators and fully moderated, secure chat channels.', glow: 'rgba(168, 85, 247, 0.15)' },
               ].map((item, i) => (
                 <motion.div
                   key={i}
@@ -295,7 +295,7 @@ export default function HeroSection() {
                   </span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                     <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em', lineHeight: 1.3 }}>{item.title}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.55, maxWidth: 380 }}>{item.desc}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.55, maxWidth: 400 }}>{item.desc}</div>
                   </div>
                 </motion.div>
               ))}
