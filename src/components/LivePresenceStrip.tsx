@@ -21,7 +21,11 @@ function getAvatarColor(name: string) {
   };
 }
 
-export default function LivePresenceStrip() {
+interface LivePresenceStripProps {
+  onProfileClick?: (username: string) => void;
+}
+
+export default function LivePresenceStrip({ onProfileClick }: LivePresenceStripProps) {
   const { live, currentUser } = useKudos();
   const uniqueUsers = Array.from(new Set(live.presenceUsers));
   const others = uniqueUsers.filter(u => u !== currentUser?.name);
@@ -94,6 +98,7 @@ export default function LivePresenceStrip() {
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0 }}
                     title={name}
+                    onClick={() => onProfileClick && onProfileClick(name)}
                     style={{
                       width: 24,
                       height: 24,
@@ -110,6 +115,7 @@ export default function LivePresenceStrip() {
                       marginLeft: i === 0 ? 0 : -8,
                       zIndex: 10 - i,
                       position: 'relative',
+                      cursor: onProfileClick ? 'pointer' : 'default',
                     }}
                   >
                     {getInitials(name)}
@@ -144,6 +150,7 @@ export default function LivePresenceStrip() {
                 <div
                   key={name}
                   title={name}
+                  onClick={() => onProfileClick && onProfileClick(name)}
                   style={{
                     width: 20,
                     height: 20,
@@ -154,12 +161,13 @@ export default function LivePresenceStrip() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.55rem',
+                    fontSize: '0.5rem',
                     fontWeight: 700,
                     color: colors.text,
                     marginLeft: i === 0 ? 0 : -6,
                     zIndex: 10 - i,
                     position: 'relative',
+                    cursor: onProfileClick ? 'pointer' : 'default',
                   }}
                 >
                   {getInitials(name)}

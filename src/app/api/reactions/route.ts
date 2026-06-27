@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     }
     
     kudos.set('reactions', currentReactions);
+    kudos.markModified('reactions');
     await kudos.save();
 
     // Recompute all counts to broadcast

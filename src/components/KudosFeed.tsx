@@ -99,7 +99,7 @@ export default function KudosFeed() {
       />
 
       {/* Live presence */}
-      <LivePresenceStrip />
+      <LivePresenceStrip onProfileClick={handleOpenProfile} />
 
       {/* Main layout — feed + sidebar */}
       <div
