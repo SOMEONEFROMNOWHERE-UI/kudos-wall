@@ -6,7 +6,6 @@ import { X, User, MessageSquare, Sparkles, Eye, EyeOff, Infinity as InfinityIcon
 import { useKudos } from '@/context/KudosContext';
 import type { KudosCategory } from '@/types';
 import { CATEGORIES } from '@/types';
-import classifyKudos from '@/lib/classifyKudos';
 
 interface GiveKudosModalProps {
   isOpen: boolean;
@@ -218,7 +217,19 @@ export default function GiveKudosModal({
     
     setIsAnalyzingSentiment(false);
     setIsVibing(true);
-    const classification = await classifyKudos(message.trim());
+    let classification = { passed: true, badge: 'GOOD_VIBES', reason: '' };
+    try {
+      const vibeRes = await fetch('/api/classify-vibe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message.trim() })
+      });
+      if (vibeRes.ok) {
+        classification = await vibeRes.json();
+      }
+    } catch (e) {
+      console.error('Vibe classification failed', e);
+    }
     setIsVibing(false);
 
     if (!classification.passed) {
