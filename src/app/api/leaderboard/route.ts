@@ -32,7 +32,16 @@ export async function GET() {
     
     const postsWithScores = allKudos.map((k: any) => {
       let score = 0;
-      if (k.likes && Array.isArray(k.likes)) {
+      // Calculate score based on total reactions across all emojis
+      if (k.reactions && typeof k.reactions === 'object') {
+        Object.values(k.reactions).forEach((users: any) => {
+          if (Array.isArray(users)) {
+            score += users.length;
+          }
+        });
+      }
+      // Fallback for older posts that might still use 'likes'
+      if (score === 0 && k.likes && Array.isArray(k.likes)) {
         score = k.likes.length;
       }
       return { ...k, score };
