@@ -33,8 +33,17 @@ export async function GET(req: NextRequest) {
     let totalLikesReceived = 0;
     
     kudosReceived.forEach((k: any) => {
+      // Legacy likes array
       if (k.likes && Array.isArray(k.likes)) {
         totalLikesReceived += k.likes.length;
+      }
+      // New reactions map
+      if (k.reactions) {
+        Object.values(k.reactions).forEach((users: any) => {
+          if (Array.isArray(users)) {
+            totalLikesReceived += users.length;
+          }
+        });
       }
     });
 
