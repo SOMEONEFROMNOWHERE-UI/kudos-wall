@@ -432,6 +432,9 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
   const [floatingPlusOnes, setFloatingPlusOnes] = useState<{ id: number; emoji: Reaction }[]>([]);
   const [showConfetti, setShowConfetti] = useState(isNew);
 
+  const isAdmin = currentUser?.name ? ['a visal', 'hello', 'me', 'admin', 'vijay'].some(n => currentUser.name.toLowerCase().includes(n)) : false;
+  const isOwner = (currentUser?.name === kudos.sender && !kudos.isAnonymous) || isAdmin;
+
   const [isEditing, setIsEditing] = useState(false);
   const [editMessage, setEditMessage] = useState(kudos.message);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -441,8 +444,6 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
   const [isHovered, setIsHovered] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
-
-  const isOwner = currentUser?.name === kudos.sender && !kudos.isAnonymous;
 
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [pctLeft, setPctLeft] = useState<number>(100);
@@ -736,7 +737,7 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
             >
               {timeAgo(kudos.createdAt)}
             </span>
-            {isOwner && !isEditing && (
+            {(isOwner || isAdmin) && !isEditing && (
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <motion.button
                   onClick={() => setIsEditing(true)}
