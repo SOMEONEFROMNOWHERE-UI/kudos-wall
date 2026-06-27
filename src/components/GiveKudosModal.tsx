@@ -134,6 +134,8 @@ export default function GiveKudosModal({
   const [isEnhanced, setIsEnhanced] = useState(false);
   const [isVibing, setIsVibing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [sentimentWarning, setSentimentWarning] = useState<string | null>(null);
+  const [isAnalyzingSentiment, setIsAnalyzingSentiment] = useState(false);
 
   const handleEnhance = async () => {
     if (isEnhancing || message.trim().length < 5) return;
@@ -191,14 +193,41 @@ export default function GiveKudosModal({
       setIsEnhanced(false);
       setIsEnhancing(false);
       setToastMessage(null);
+      setSentimentWarning(null);
+      setIsAnalyzingSentiment(false);
       setTimeout(() => receiverRef.current?.focus(), 150);
     }
   }, [isOpen, prefillReceiver, prefillMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!receiver.trim() || !message.trim() || !category || !currentUser || isSubmitting || isVibing) return;
+    if (!receiver.trim() || !message.trim() || !category || !currentUser || isSubmitting || isVibing || isAnalyzingSentiment) return;
     
+    setSentimentWarning(null);
+    setIsAnalyzingSentiment(true);
+    
+    try {
+      const sentRes = await fetch('/api/analyze-sentiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message.trim() })
+      });
+      if (sentRes.ok) {
+        const sentimentData = await sentRes.json();
+        if (sentimentData.sentiment === 'negative') {
+          setIsAnalyzingSentiment(false);
+          setSentimentWarning(`⚠️ Your message seems negative. Kudos should be uplifting! Try rephrasing. (Reason: ${sentimentData.reason})`);
+          return;
+        } else if (sentimentData.sentiment === 'neutral') {
+          setToastMessage('💡 Tip: More specific praise makes kudos more meaningful!');
+          setTimeout(() => setToastMessage(null), 4000);
+        }
+      }
+    } catch (e) {
+      console.error('Sentiment check failed', e);
+    }
+    
+    setIsAnalyzingSentiment(false);
     setIsVibing(true);
     const classification = await classifyKudos(message.trim());
     setIsVibing(false);
@@ -621,9 +650,30 @@ export default function GiveKudosModal({
                               paddingLeft: 46,
                               paddingTop: 14,
                               transition: 'all 0.3s ease',
+                              ...(sentimentWarning ? {
+                                borderColor: 'rgba(249, 115, 22, 0.8)',
+                                boxShadow: '0 0 15px rgba(249, 115, 22, 0.25)',
+                              } : {})
                             }}
                           />
                         </div>
+                        {sentimentWarning && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            style={{
+                              color: '#F97316', // Orange accent
+                              fontSize: '0.85rem',
+                              fontWeight: 500,
+                              marginTop: 8,
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 6
+                            }}
+                          >
+                            <span>{sentimentWarning}</span>
+                          </motion.div>
+                        )}
                         {/* Kudos Auto-Enhancer */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, minHeight: 32 }}>
                           <div>
@@ -883,7 +933,7 @@ export default function GiveKudosModal({
                             : {}),
                         }}
                       >
-                        {isSubmitting || isVibing ? (
+                        {isSubmitting || isVibing || isAnalyzingSentiment ? (
                           <>
                             <motion.span
                               animate={{ rotate: 360 }}
@@ -892,7 +942,7 @@ export default function GiveKudosModal({
                             >
                               ✦
                             </motion.span>
-                            {isVibing ? '✨ Checking vibes…' : 'Sending…'}
+                            {isAnalyzingSentiment ? 'Analyzing...' : isVibing ? '✨ Checking vibes…' : 'Sending…'}
                           </>
                         ) : (
                           <>
