@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trophy, TrendingUp, Heart, Medal, Star } from 'lucide-react';
 import { getAvatarColor, getInitials } from '@/lib/utils';
 import type { KudosData } from '@/types';
+import KudosCard from './KudosCard';
 
 interface LeaderboardModalProps {
   isOpen: boolean;
@@ -159,17 +160,7 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {data.topPosts.length === 0 ? <div style={{ textAlign: 'center', color: '#888', padding: '40px 0' }}>No posts yet</div> : null}
                     {data.topPosts.map((post, i) => (
-                      <div key={i} style={{ padding: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
-                        {i === 0 && <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: 'var(--cat-fire)', boxShadow: '0 0 12px var(--cat-fire)' }} />}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: getAvatarColor(post.sender).base, display: 'flex', alignItems: 'center', justifyContent: 'center', color: getAvatarColor(post.sender).text, fontSize: '10px', fontWeight: 'bold' }}>{getInitials(post.sender)}</div>
-                            <span style={{ fontSize: '14px', color: '#AAA' }}><span style={{ color: '#FFF', fontWeight: 600 }}>{post.sender === 'Anonymous' ? '🥷 Anonymous' : post.sender}</span> to <span style={{ color: '#FFF', fontWeight: 600 }}>{post.receiver}</span></span>
-                          </div>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--cat-fire)', fontWeight: 'bold', background: 'rgba(255, 107, 74, 0.1)', padding: '4px 10px', borderRadius: 20, fontSize: '13px' }}><Heart size={14} fill="currentColor" /> {post.score}</span>
-                        </div>
-                        <p style={{ fontStyle: 'italic', color: '#EEE', fontSize: '15px', lineHeight: 1.5, margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>"{post.message}"</p>
-                      </div>
+                      <KudosCard key={post._id || i} kudos={post} index={i} />
                     ))}
                   </motion.div>
                 )}
