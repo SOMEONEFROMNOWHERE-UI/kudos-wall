@@ -17,6 +17,7 @@ interface TrendingPerson {
 
 interface GlowingRightNowProps {
   onOpenComposer?: () => void;
+  onProfileClick?: (username: string) => void;
 }
 
 // Avatar with matching HSL backdrop-glow and presence indicators
@@ -104,19 +105,16 @@ function LiveAvatar({ name, glowScore, isOnline }: { name: string; glowScore: nu
   );
 }
 
-export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps) {
+export default function GlowingRightNow({ onOpenComposer, onProfileClick }: GlowingRightNowProps) {
   const { live } = useKudos();
   const presenceUsers = live?.presenceUsers || [];
 
   const [trending, setTrending] = useState<TrendingPerson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<string>('');
 
   const handleProfileClick = (username: string) => {
-    setSelectedUser(username);
-    setIsProfileModalOpen(true);
+    if (onProfileClick) onProfileClick(username);
   };
 
   useEffect(() => {
@@ -514,12 +512,6 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
           </AnimatePresence>
         </motion.div>
       </div>
-
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
-        username={selectedUser} 
-      />
     </>
   );
 }

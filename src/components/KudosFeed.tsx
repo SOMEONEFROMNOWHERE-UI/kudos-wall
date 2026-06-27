@@ -33,7 +33,13 @@ export default function KudosFeed() {
   const [isJarOpen, setIsJarOpen] = useState(false);
   const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileUsername, setProfileUsername] = useState<string | undefined>();
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+
+  const handleOpenProfile = (username?: string) => {
+    setProfileUsername(username);
+    setIsProfileOpen(true);
+  };
 
   const uniqueUsers = Array.from(new Set(live?.presenceUsers || []));
   const others = uniqueUsers.filter(u => u !== currentUser?.name);
@@ -82,13 +88,14 @@ export default function KudosFeed() {
         onOpenJar={() => setIsJarOpen(true)}
         onOpenComposer={() => setIsModalOpen(true)}
         onOpenFriends={() => setIsFriendsPanelOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={() => handleOpenProfile()}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
       />
 
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+        username={profileUsername}
       />
 
       {/* Live presence */}
@@ -136,7 +143,7 @@ export default function KudosFeed() {
           {/* Mobile: Glowing Right Now pill */}
           {kudosList.length > 0 && (
             <div className="mobile-only" style={{ marginBottom: 'var(--space-3)' }}>
-              <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} />
+              <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} onProfileClick={handleOpenProfile} />
             </div>
           )}
 
@@ -237,7 +244,7 @@ export default function KudosFeed() {
                 }}
               >
               {kudosList.map((kudos, i) => (
-                <KudosCard key={kudos._id || i} kudos={kudos} index={i} />
+                <KudosCard key={kudos._id || i} kudos={kudos} index={i} onProfileClick={handleOpenProfile} />
               ))}
             </div>
             </>
@@ -247,7 +254,7 @@ export default function KudosFeed() {
         {/* ── Right: Sidebar (desktop only) ── */}
         {kudosList.length > 0 && (
           <aside className="desktop-only" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} />
+            <GlowingRightNow onOpenComposer={() => setIsModalOpen(true)} onProfileClick={handleOpenProfile} />
           </aside>
         )}
       </div>

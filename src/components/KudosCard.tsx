@@ -12,6 +12,7 @@ import ProfileModal from './ProfileModal';
 interface KudosCardProps {
   kudos: KudosData;
   index: number;
+  onProfileClick?: (username: string) => void;
   isNew?: boolean; // for Supabase Realtime new-card flash
 }
 
@@ -70,12 +71,13 @@ function timeAgo(dateStr: string | undefined): string {
 }
 
 
-function Avatar({ name, size = 36 }: { name: string; size?: number }) {
+function Avatar({ name, size = 36, onClick }: { name: string; size?: number; onClick?: () => void }) {
   const colors = getAvatarColor(name);
   const initials = getInitials(name);
 
   return (
     <motion.div
+      onClick={onClick}
       whileHover={{ 
         scale: 1.1, 
         boxShadow: `0 0 0 6px ${colors.hoverRing}` 
@@ -415,7 +417,7 @@ function formatTimeLeft(ms: number | null): string {
   return parts.join(' ');
 }
 
-export default function KudosCard({ kudos, index, isNew = false }: KudosCardProps) {
+export default function KudosCard({ kudos, index, onProfileClick, isNew = false }: KudosCardProps) {
   const accentGradient = ACCENT_GRADIENTS[kudos.category] || ACCENT_GRADIENTS['🫂'];
   const accentColor = ACCENT_COLORS[kudos.category] || ACCENT_COLORS['🫂'];
   const tagInfo = VIBE_TAG_STYLING[kudos.category] || VIBE_TAG_STYLING['🫂'];
@@ -429,8 +431,6 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const [hoveredReaction, setHoveredReaction] = useState<Reaction | null>(null);
   const [floatingPlusOnes, setFloatingPlusOnes] = useState<{ id: number; emoji: Reaction }[]>([]);
   const [showConfetti, setShowConfetti] = useState(isNew);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<string>('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [editMessage, setEditMessage] = useState(kudos.message);
@@ -446,6 +446,10 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
 
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [pctLeft, setPctLeft] = useState<number>(100);
+
+  const handleProfileClick = (username: string) => {
+    if (onProfileClick) onProfileClick(username);
+  };
 
   useEffect(() => {
     if (!kudos.expiresAt) return;
@@ -1090,13 +1094,6 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         )}
       </div>
     </motion.div>
-    
-    {/* Profile Modal for clicked users - Moved outside motion.div to escape stacking context */}
-    <ProfileModal 
-      isOpen={isProfileModalOpen} 
-      onClose={() => setIsProfileModalOpen(false)} 
-      username={selectedUser} 
-    />
   </>
   );
 }

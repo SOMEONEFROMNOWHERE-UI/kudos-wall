@@ -55,7 +55,7 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
     ].filter(Boolean) as any[];
 
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 20, height: 240, marginBottom: 40, marginTop: 40 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 32, marginBottom: 40, marginTop: 40 }}>
         {podium.map((u, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', marginBottom: 12 }}>
@@ -164,7 +164,7 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{ width: 24, height: 24, borderRadius: '50%', background: getAvatarColor(post.sender).base, display: 'flex', alignItems: 'center', justifyContent: 'center', color: getAvatarColor(post.sender).text, fontSize: '10px', fontWeight: 'bold' }}>{getInitials(post.sender)}</div>
-                            <span style={{ fontSize: '14px', color: '#AAA' }}><span style={{ color: '#FFF', fontWeight: 600 }}>{post.sender}</span> to <span style={{ color: '#FFF', fontWeight: 600 }}>{post.receiver}</span></span>
+                            <span style={{ fontSize: '14px', color: '#AAA' }}><span style={{ color: '#FFF', fontWeight: 600 }}>{post.sender === 'Anonymous' ? '🥷 Anonymous' : post.sender}</span> to <span style={{ color: '#FFF', fontWeight: 600 }}>{post.receiver}</span></span>
                           </div>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--cat-fire)', fontWeight: 'bold', background: 'rgba(255, 107, 74, 0.1)', padding: '4px 10px', borderRadius: 20, fontSize: '13px' }}><Heart size={14} fill="currentColor" /> {post.score}</span>
                         </div>
