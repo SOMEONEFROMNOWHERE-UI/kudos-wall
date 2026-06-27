@@ -693,6 +693,9 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                   ) : (
                     messages.map((msg, i) => {
                       const isMe = msg.senderId === currentUser?.name;
+                      const adminNames = ['a visal', 'hello', 'me', 'admin', 'vijay'];
+                      const isAdmin = currentUser?.name ? adminNames.some(n => currentUser.name.toLowerCase().includes(n)) : false;
+                      const canDelete = isMe || isAdmin;
                       return (
                         <div
                           key={msg._id || i}
@@ -731,17 +734,17 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                             >
                               {msg.content}
                             </div>
-                            {isMe && msg._id && (
+                            {canDelete && msg._id && (
                               <button
                                 onClick={() => deleteMessage(msg._id)}
                                 style={{
                                   background: 'transparent',
                                   border: 'none',
-                                  color: 'rgba(255, 107, 74, 0.6)',
+                                  color: 'rgba(255, 107, 74, 0.8)',
                                   cursor: 'pointer',
                                   padding: 4,
-                                  opacity: 0,
-                                  transition: 'opacity 0.2s',
+                                  opacity: 0.3,
+                                  transition: 'all 0.2s ease',
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',

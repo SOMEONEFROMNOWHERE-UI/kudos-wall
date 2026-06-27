@@ -145,8 +145,11 @@ export async function DELETE(request: NextRequest) {
     const userId = session.user.name;
     const db = await dbConnect();
 
+    const adminNames = ['a visal', 'hello', 'me', 'admin', 'vijay'];
+    const isAdmin = adminNames.some(n => userId.toLowerCase().includes(n));
+
     if (!db) {
-      const idx = memoryMessages.findIndex(m => m._id === messageId && m.senderId === userId);
+      const idx = memoryMessages.findIndex(m => m._id === messageId && (isAdmin || m.senderId === userId));
       if (idx !== -1) {
         memoryMessages.splice(idx, 1);
         return NextResponse.json({ success: true });
@@ -154,7 +157,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
     }
 
-    const result = await ChatMessage.deleteOne({ _id: messageId, senderId: userId });
+    const query = isAdmin ? { _id: messageId } : { _id: messageId, senderId: userId };
+    const result = await ChatMessage.deleteOne(query);
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
     }
