@@ -1022,12 +1022,12 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: hasCount ? '6px' : '0px',
+                    gap: '6px',
                     fontSize: '13px',
-                    padding: hasCount ? '6px 14px' : '0px',
-                    width: hasCount ? 'auto' : '34px',
+                    padding: '6px 14px',
+                    width: 'auto',
                     height: '34px',
-                    minWidth: hasCount ? 'auto' : '34px',
+                    minWidth: '64px',
                     borderRadius: '999px',
                     background: active 
                       ? styleInfo.activeBg 
