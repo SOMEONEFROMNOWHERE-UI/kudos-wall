@@ -48,13 +48,26 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.name;
-    const allMembers = Array.from(new Set([userId, ...(memberIds || [])]));
+    const allMembers = Array.from(new Set([...(memberIds || [])])).filter(id => id !== userId);
 
     const group = await Group.create({
       name: name.trim(),
       createdBy: userId,
-      memberIds: allMembers,
+      memberIds: [userId],
     });
+
+    // Create group requests for other members
+    const GroupRequest = mongoose.models.GroupRequest;
+    if (GroupRequest && allMembers.length > 0) {
+      const requests = allMembers.map(receiverId => ({
+        senderId: userId,
+        receiverId,
+        groupId: group._id,
+        groupName: group.name,
+        status: 'pending',
+      }));
+      await GroupRequest.insertMany(requests);
+    }
 
     return NextResponse.json(group, { status: 201 });
   } catch (error) {
@@ -83,7 +96,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (addMembers?.length) {
-      await Group.updateOne({ _id: groupId }, { $addToSet: { memberIds: { $each: addMembers } } });
+      const GroupRequest = mongoose.models.GroupRequest;
+      if (GroupRequest) {
+        const requests = addMembers
+          .filter((id: string) => !group.memberIds.includes(id))
+          .map((receiverId: string) => ({
+            senderId: userId,
+            receiverId,
+            groupId: group._id,
+            groupName: group.name,
+            status: 'pending',
+          }));
+        if (requests.length > 0) {
+          await GroupRequest.insertMany(requests);
+        }
+      }
     }
     if (removeMembers?.length) {
       await Group.updateOne({ _id: groupId }, { $pull: { memberIds: { $in: removeMembers } } });

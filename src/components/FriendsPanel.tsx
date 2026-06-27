@@ -209,11 +209,19 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
   };
 
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
+  const [groupRequests, setGroupRequests] = useState<any[]>([]);
 
   const fetchFriendRequests = async () => {
     try {
       const res = await fetch('/api/friend-requests');
       if (res.ok) setFriendRequests(await res.json());
+    } catch { /* ignore */ }
+  };
+
+  const fetchGroupRequests = async () => {
+    try {
+      const res = await fetch('/api/group-requests');
+      if (res.ok) setGroupRequests(await res.json());
     } catch { /* ignore */ }
   };
 
@@ -224,6 +232,7 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
       fetchFriends();
       fetchGroups();
       fetchFriendRequests();
+      fetchGroupRequests();
     } else {
       document.body.style.overflow = '';
       setChatTarget(null);
@@ -252,15 +261,14 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/friends', {
+      const res = await fetch('/api/friend-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ friendName: addName.trim() }),
+        body: JSON.stringify({ receiverId: addName.trim() }),
       });
       if (res.ok) {
-        setSuccess(`${addName.trim()} added!`);
+        setSuccess(`Friend request sent to ${addName.trim()}!`);
         setAddName('');
-        fetchFriends();
         setTimeout(() => setSuccess(''), 2000);
       } else {
         const d = await res.json();
@@ -283,6 +291,20 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
       if (res.ok) {
         fetchFriendRequests();
         if (action === 'accepted') fetchFriends();
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleGroupRequest = async (requestId: string, action: 'accepted' | 'declined') => {
+    try {
+      const res = await fetch('/api/group-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action }),
+      });
+      if (res.ok) {
+        fetchGroupRequests();
+        if (action === 'accepted') fetchGroups();
       }
     } catch { /* ignore */ }
   };
@@ -375,16 +397,16 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
   const addGroupMember = async (friendName: string) => {
     if (!currentGroup) return;
     try {
-      const res = await fetch('/api/groups', {
-        method: 'PATCH',
+      const res = await fetch('/api/group-requests', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           groupId: currentGroup._id,
-          addMembers: [friendName]
+          receiverId: friendName
         }),
       });
       if (res.ok) {
-        fetchGroups();
+        // optionally show a toast that invite was sent
       }
     } catch { /* ignore */ }
   };
@@ -1361,6 +1383,82 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {/* GROUP INVITES SECTION */}
+                      {groupRequests.length > 0 && (
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{
+                            fontSize: '11px',
+                            color: 'var(--accent)',
+                            marginBottom: 'var(--space-2)',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                          }}>
+                            Group Invites ({groupRequests.length})
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {groupRequests.map(req => (
+                              <div
+                                key={req._id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '10px 12px',
+                                  borderRadius: 'var(--radius-md)',
+                                  background: 'rgba(232, 184, 75, 0.05)',
+                                  border: '1px solid rgba(232, 184, 75, 0.2)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                                  <GroupAvatar name={req.groupName} />
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', fontWeight: 600 }}>
+                                      {req.groupName}
+                                    </span>
+                                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                                      Invited by {req.senderId}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button
+                                    onClick={() => handleGroupRequest(req._id, 'accepted')}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      background: 'rgba(52, 211, 153, 0.15)',
+                                      color: '#34d399',
+                                      border: '1px solid rgba(52, 211, 153, 0.3)',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleGroupRequest(req._id, 'declined')}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: 6,
+                                      background: 'rgba(255, 107, 74, 0.15)',
+                                      color: 'var(--cat-fire)',
+                                      border: '1px solid rgba(255, 107, 74, 0.3)',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div style={{
                         fontSize: '11px',
                         color: 'var(--text-secondary)',
