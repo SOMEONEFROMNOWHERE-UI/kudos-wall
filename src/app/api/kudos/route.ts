@@ -57,10 +57,10 @@ export async function GET(request: Request) {
       .lean();
 
     return NextResponse.json(kudos);
-  } catch (error) {
+  } catch (error: any) {
     console.error('GET /api/kudos error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch kudos' },
+      { error: 'Failed to fetch kudos', message: error.message, stack: error.stack },
       { status: 500 }
     );
   }
