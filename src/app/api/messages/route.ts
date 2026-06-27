@@ -145,8 +145,8 @@ export async function DELETE(request: NextRequest) {
     const userId = session.user.name;
     const db = await dbConnect();
 
-    const adminNames = ['a visal', 'hello', 'me', 'admin', 'vijay'];
-    const isAdmin = adminNames.some(n => userId.toLowerCase().includes(n));
+    const userEmail = session.user.email;
+    const isAdmin = userEmail === 'vijayvisal2710@gmail.com';
 
     if (!db) {
       const idx = memoryMessages.findIndex(m => m._id === messageId && (isAdmin || m.senderId === userId));

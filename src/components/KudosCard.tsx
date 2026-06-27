@@ -432,7 +432,7 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
   const [floatingPlusOnes, setFloatingPlusOnes] = useState<{ id: number; emoji: Reaction }[]>([]);
   const [showConfetti, setShowConfetti] = useState(isNew);
 
-  const isAdmin = currentUser?.name ? ['a visal', 'hello', 'me', 'admin', 'vijay'].some(n => currentUser.name.toLowerCase().includes(n)) : false;
+  const isAdmin = currentUser?.email === 'vijayvisal2710@gmail.com';
   const isOwner = (currentUser?.name === kudos.sender && !kudos.isAnonymous) || isAdmin;
 
   const [isEditing, setIsEditing] = useState(false);

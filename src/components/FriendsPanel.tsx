@@ -693,8 +693,7 @@ export default function FriendsPanel({ isOpen, onClose }: FriendsPanelProps) {
                   ) : (
                     messages.map((msg, i) => {
                       const isMe = msg.senderId === currentUser?.name;
-                      const adminNames = ['a visal', 'hello', 'me', 'admin', 'vijay'];
-                      const isAdmin = currentUser?.name ? adminNames.some(n => currentUser.name.toLowerCase().includes(n)) : false;
+                      const isAdmin = currentUser?.email === 'vijayvisal2710@gmail.com';
                       const canDelete = isMe || isAdmin;
                       return (
                         <div
