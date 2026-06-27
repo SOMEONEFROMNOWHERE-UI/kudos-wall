@@ -31,13 +31,11 @@ export async function GET() {
     const allKudos = await Kudos.find().lean();
     
     const postsWithScores = allKudos.map((k: any) => {
-      let totalReactions = 0;
-      if (k.reactions) {
-        Object.values(k.reactions).forEach((arr: any) => {
-          totalReactions += (arr || []).length;
-        });
+      let score = 0;
+      if (k.likes && Array.isArray(k.likes)) {
+        score = k.likes.length;
       }
-      return { ...k, score: totalReactions };
+      return { ...k, score };
     });
 
     const topPosts = postsWithScores

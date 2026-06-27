@@ -33,10 +33,9 @@ export async function GET(req: NextRequest) {
     let totalLikesReceived = 0;
     
     kudosReceived.forEach((k: any) => {
-      const reactions = k.reactions || {};
-      Object.values(reactions).forEach((arr: any) => {
-        totalLikesReceived += arr.length;
-      });
+      if (k.likes && Array.isArray(k.likes)) {
+        totalLikesReceived += k.likes.length;
+      }
     });
 
     return NextResponse.json({
