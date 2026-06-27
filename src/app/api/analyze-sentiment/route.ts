@@ -12,14 +12,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ sentiment: 'positive', score: 100, reason: 'No API key' });
     }
 
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const isGroq = apiKey.startsWith('gsk_');
+    const endpoint = isGroq 
+      ? 'https://api.groq.com/openai/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+    
+    const model = isGroq ? 'llama-3.3-70b-versatile' : 'gpt-3.5-turbo';
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: model,
         messages: [
           {
             role: 'system',
