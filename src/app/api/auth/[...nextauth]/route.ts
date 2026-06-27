@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import dbConnect from '@/lib/mongodb';
+import dbConnect, { memoryDb } from '@/lib/mongodb';
 import User from '@/lib/models/User';
+import { v4 as uuidv4 } from 'uuid';
 
 const handler = NextAuth({
   providers: [
@@ -12,15 +13,15 @@ const handler = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      if (!user.email || !user.name) return false;
+      if (!user.email) return false;
+      const name = user.name || user.email.split('@')[0];
+      user.name = name;
       
       try {
         const db = await dbConnect();
         
         if (!db) {
           // Use in-memory database
-          const { memoryDb } = require('@/lib/mongodb');
-          const { v4: uuidv4 } = require('uuid');
           let existingUser = memoryDb.users.find((u: any) => u.name === user.name);
           if (!existingUser) {
             memoryDb.users.push({
