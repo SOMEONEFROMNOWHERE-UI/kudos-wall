@@ -886,8 +886,7 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
           <div 
             style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
             onClick={() => {
-              setSelectedUser(kudos.receiver);
-              setIsProfileModalOpen(true);
+              if (onProfileClick) onProfileClick(kudos.receiver);
             }}
           >
             <AvatarMemo name={kudos.receiver} />
@@ -900,9 +899,8 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
           <div 
             style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: kudos.isAnonymous ? 'default' : 'pointer' }}
             onClick={() => {
-              if (!kudos.isAnonymous) {
-                setSelectedUser(kudos.sender);
-                setIsProfileModalOpen(true);
+              if (!kudos.isAnonymous && onProfileClick) {
+                onProfileClick(kudos.sender);
               }
             }}
           >
