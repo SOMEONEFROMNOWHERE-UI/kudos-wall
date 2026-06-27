@@ -20,7 +20,7 @@ export async function moderateContent(message: string): Promise<{ verdict: 'pass
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
-        model: 'llama3-8b-8192',
+        model: 'llama-3.3-70b-versatile',
         response_format: { type: 'json_object' }
       });
       content = chatCompletion.choices[0]?.message?.content || '';
