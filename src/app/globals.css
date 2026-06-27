@@ -1110,13 +1110,11 @@ textarea.input-field {
   -webkit-backdrop-filter: blur(16px) !important;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   position: relative;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
 
-/* Base style for the top and bottom flowing neon borders */
-.presence-strip::before,
+/* Base style for the bottom flowing neon border */
 .presence-strip::after {
   content: "";
   position: absolute;
@@ -1136,12 +1134,6 @@ textarea.input-field {
   filter: drop-shadow(0 0 1.5px rgba(194, 71, 172, 0.4));
   transition: opacity 0.3s ease, filter 0.3s ease, height 0.3s ease;
   pointer-events: none;
-}
-
-/* Top border */
-.presence-strip::before {
-  top: 0;
-  animation: flowBorderLR 8s linear infinite;
 }
 
 /* Bottom border */
@@ -1165,13 +1157,6 @@ textarea.input-field {
   background: rgba(22, 22, 32, 0.6) !important;
   border-top-color: rgba(255, 255, 255, 0.08);
   border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-.presence-strip:hover::before {
-  opacity: 1;
-  height: 2px;
-  animation: flowBorderLR 3s linear infinite;
-  filter: drop-shadow(0 0 4px rgba(194, 71, 172, 0.85)) drop-shadow(0 0 1px #c247ac);
 }
 
 .presence-strip:hover::after {
@@ -1611,15 +1596,7 @@ textarea.kudos-modal-input {
   pointer-events: none;
 }
 
-/* Hide the glowing border and normal border when presence strip is shown */
-.navbar-header.has-presence {
-  border-bottom: none !important;
-}
-.navbar-header.has-presence::after {
-  opacity: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
+
 
 /* Intensify and speed up glow on navbar hover */
 .navbar-header:hover {
