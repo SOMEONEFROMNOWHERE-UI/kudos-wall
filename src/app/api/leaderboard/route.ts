@@ -39,7 +39,13 @@ export async function GET() {
     });
 
     const topPosts = postsWithScores
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        // Fallback to most recent first if scores are equal
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
       .slice(0, 5);
 
     return NextResponse.json({
