@@ -4,6 +4,7 @@ import Kudos from '@/lib/models/Kudos';
 import User from '@/lib/models/User';
 import { v4 as uuidv4 } from 'uuid';
 import { broadcastKudos } from '@/app/api/events/route';
+import { moderateContent } from '@/lib/moderation';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,7 +99,6 @@ export async function POST(request: Request) {
     const expiresAtVal = duration ? new Date(Date.now() + duration * 60 * 1000) : null;
 
     // AI Moderation
-    const { moderateContent } = require('@/lib/moderation');
     const moderationResult = await moderateContent(message);
     if (moderationResult.verdict === 'fail') {
       return NextResponse.json(
