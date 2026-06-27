@@ -11,6 +11,7 @@ export interface KudosData {
   expiresAt?: string | null;
   badge?: string;
   likes?: string[];
+  reactions?: Record<string, string[]>;
   createdAt?: string;
 }
 

@@ -50,8 +50,14 @@ export async function POST(req: NextRequest) {
     const kudos = await Kudos.findById(kudosId);
     if (!kudos) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const currentReactions = kudos.get('reactions') || new Map();
-    let users = currentReactions.get(emoji) || [];
+    const currentReactions: any = kudos.get('reactions') || new Map();
+    
+    // Safely get existing users (handle both Mongoose Map and POJO)
+    const existingUsers = typeof currentReactions.get === 'function' 
+      ? currentReactions.get(emoji) 
+      : currentReactions[emoji];
+      
+    let users: string[] = Array.isArray(existingUsers) ? [...existingUsers] : [];
 
     if (undo) {
       users = users.filter((u: string) => u !== userName);
@@ -61,14 +67,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    currentReactions.set(emoji, users);
+    if (typeof currentReactions.set === 'function') {
+      currentReactions.set(emoji, users);
+    } else {
+      currentReactions[emoji] = users;
+    }
+    
     kudos.set('reactions', currentReactions);
     await kudos.save();
 
     // Recompute all counts to broadcast
     const counts: Record<string, number> = {};
-    for (const [key, val] of currentReactions.entries()) {
-      counts[key] = (val as string[]).length;
+    
+    if (typeof currentReactions.entries === 'function') {
+      for (const [key, val] of currentReactions.entries()) {
+        counts[key] = (val as string[]).length;
+      }
+    } else {
+      for (const [key, val] of Object.entries(currentReactions)) {
+        counts[key] = (val as string[]).length;
+      }
     }
 
     // Still broadcast via SSE for instant live updates

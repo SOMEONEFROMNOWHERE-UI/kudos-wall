@@ -3,7 +3,10 @@ import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
 import Kudos from '@/lib/models/Kudos';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const session = await getServerSession();
   
   if (!session?.user?.name) {
@@ -12,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     await dbConnect();
-    const { id } = params;
+    const { id } = await params;
     const userName = session.user.name;
 
     // Find the kudos document
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     
     if (hasLiked) {
       // Remove like
-      kudos.likes = kudos.likes.filter((name: string) => name !== userName);
+      kudos.likes = (kudos.likes || []).filter((name: string) => name !== userName);
     } else {
       // Add like
       if (!kudos.likes) {
