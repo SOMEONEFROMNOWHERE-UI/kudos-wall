@@ -566,6 +566,7 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const isExpired = timeLeft !== null && timeLeft <= 0;
 
   return (
+    <>
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -1088,13 +1089,14 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
           </div>
         )}
       </div>
-      
-      {/* Profile Modal for clicked users */}
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
-        username={selectedUser} 
-      />
     </motion.div>
+    
+    {/* Profile Modal for clicked users - Moved outside motion.div to escape stacking context */}
+    <ProfileModal 
+      isOpen={isProfileModalOpen} 
+      onClose={() => setIsProfileModalOpen(false)} 
+      username={selectedUser} 
+    />
+  </>
   );
 }

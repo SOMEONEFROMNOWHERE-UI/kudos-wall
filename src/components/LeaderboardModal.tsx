@@ -55,13 +55,13 @@ export default function LeaderboardModal({ isOpen, onClose }: LeaderboardModalPr
     ].filter(Boolean) as any[];
 
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 20, height: 240, marginBottom: 40, marginTop: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 20, height: 240, marginBottom: 40, marginTop: 40 }}>
         {podium.map((u, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ position: 'relative', marginBottom: 12 }}>
-              {u.rank === 1 && <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 2 }} style={{ position: 'absolute', top: -32, left: '50%', transform: 'translateX(-50%)' }}><Trophy size={26} color={u.color} fill={u.color} style={{ filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.5))' }} /></motion.div>}
+              {u.rank === 1 && <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 2 }} style={{ position: 'absolute', top: -36, left: '50%', transform: 'translateX(-50%)' }}><Trophy size={32} color={u.color} fill={u.color} style={{ filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.6))' }} /></motion.div>}
               <div style={{
-                width: u.rank === 1 ? 64 : 52, height: u.rank === 1 ? 64 : 52, borderRadius: '50%', background: getAvatarColor(u.name).base,
+                width: u.rank === 1 ? 72 : 56, height: u.rank === 1 ? 72 : 56, borderRadius: '50%', background: getAvatarColor(u.name).base,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: getAvatarColor(u.name).text,
                 fontWeight: 'bold', fontSize: u.rank === 1 ? '22px' : '18px', border: `3px solid ${u.color}`,
                 boxShadow: `0 0 20px ${u.color}40`, zIndex: 10, position: 'relative'

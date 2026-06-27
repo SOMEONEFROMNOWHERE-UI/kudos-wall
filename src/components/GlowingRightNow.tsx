@@ -6,6 +6,7 @@ import { useKudos } from '@/context/KudosContext';
 import { getAvatarColor, getInitials } from '@/lib/utils';
 import { Flame, Sparkles, Activity, Plus } from 'lucide-react';
 import TeamHeartbeat from './TeamHeartbeat';
+import ProfileModal from './ProfileModal';
 
 interface TrendingPerson {
   name: string;
@@ -110,6 +111,13 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
   const [trending, setTrending] = useState<TrendingPerson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string>('');
+
+  const handleProfileClick = (username: string) => {
+    setSelectedUser(username);
+    setIsProfileModalOpen(true);
+  };
 
   useEffect(() => {
     fetch('/api/trending')
@@ -227,6 +235,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                         
                         <div
                           className="kudos-card-inner"
+                          onClick={() => handleProfileClick(name)}
                           style={{
                             borderRadius: 10,
                             padding: '8px 12px',
@@ -237,6 +246,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                             border: '1px solid rgba(255, 255, 255, 0.05)',
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                             willChange: 'transform',
+                            cursor: 'pointer',
                           }}
                         >
                           <LiveAvatar name={name} glowScore={0.1} isOnline={true} />
@@ -312,6 +322,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                           
                           <div
                             className="kudos-card-inner"
+                            onClick={() => handleProfileClick(person.name)}
                             style={{
                               borderRadius: 10,
                               padding: '8px 12px',
@@ -322,6 +333,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                               border: '1px solid rgba(255, 255, 255, 0.05)',
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                               willChange: 'transform',
+                              cursor: 'pointer',
                             }}
                           >
                             <LiveAvatar name={person.name} glowScore={person.glowScore} isOnline={isOnline} />
@@ -445,7 +457,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                         <span style={{ fontSize: '11px', color: '#65656F', fontStyle: 'italic' }}>Nobody online</span>
                       ) : (
                         presenceUsers.map((name) => (
-                          <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
+                          <div key={name} onClick={() => handleProfileClick(name)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0', cursor: 'pointer' }}>
                             <LiveAvatar name={name} glowScore={0.1} isOnline={true} />
                             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#EDEDF0' }}>{name}</div>
                           </div>
@@ -468,7 +480,7 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
                         const rgbColor = avatarColors.rgb;
                         
                         return (
-                          <div key={person.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+                          <div key={person.name} onClick={() => handleProfileClick(person.name)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', cursor: 'pointer' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <LiveAvatar name={person.name} glowScore={person.glowScore} isOnline={isOnline} />
                               <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#EDEDF0' }}>{person.name}</div>
@@ -502,6 +514,12 @@ export default function GlowingRightNow({ onOpenComposer }: GlowingRightNowProps
           </AnimatePresence>
         </motion.div>
       </div>
+
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        username={selectedUser} 
+      />
     </>
   );
 }
