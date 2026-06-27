@@ -681,7 +681,7 @@ export default function KudosCard({ kudos, index, onProfileClick, isNew = false 
             </div>
 
             {/* AI Vibe Badge */}
-            {kudos.badge && BADGE_MAP[kudos.badge] && (
+            {kudos.badge && BADGE_MAP[kudos.badge] && kudos.badge !== 'GOOD_VIBES' && (
               <div
                 style={{
                   display: 'inline-flex',
