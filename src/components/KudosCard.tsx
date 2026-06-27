@@ -7,6 +7,7 @@ import type { KudosData } from '@/types';
 import { CATEGORIES } from '@/types';
 import { Pencil, Trash2, X, Check } from 'lucide-react';
 import { getAvatarColor, getInitials } from '@/lib/utils';
+import ProfileModal from './ProfileModal';
 
 interface KudosCardProps {
   kudos: KudosData;
@@ -428,6 +429,8 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   const [hoveredReaction, setHoveredReaction] = useState<Reaction | null>(null);
   const [floatingPlusOnes, setFloatingPlusOnes] = useState<{ id: number; emoji: Reaction }[]>([]);
   const [showConfetti, setShowConfetti] = useState(isNew);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string>('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [editMessage, setEditMessage] = useState(kudos.message);
@@ -485,11 +488,22 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   }, [isNew]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`kudos_rx_${kudos._id}`);
-      if (saved) setMyReactions(JSON.parse(saved));
-    } catch { /* ignore */ }
-  }, [kudos._id]);
+    if (kudos.reactions) {
+      const parsedReactions: Record<Reaction, number> = { '🌟': 0, '🔥': 0, '🫂': 0 };
+      const myParsedReactions: Record<Reaction, boolean> = { '🌟': false, '🔥': false, '🫂': false };
+      
+      for (const emoji of REACTION_EMOJIS) {
+        const users = kudos.reactions[emoji] || [];
+        parsedReactions[emoji] = users.length;
+        if (currentUser?.name && users.includes(currentUser.name)) {
+          myParsedReactions[emoji] = true;
+        }
+      }
+      
+      setReactions(prev => ({ ...prev, ...parsedReactions }));
+      setMyReactions(myParsedReactions);
+    }
+  }, [kudos.reactions, currentUser?.name]);
 
   useEffect(() => {
     if (kudos._id && live.reactions[kudos._id]) {
@@ -520,10 +534,10 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
   };
 
   const handleReaction = async (emoji: Reaction) => {
+    if (!currentUser) return; // must be logged in
     const isUndo = myReactions[emoji];
     const nextMyReactions = { ...myReactions, [emoji]: !isUndo };
     setMyReactions(nextMyReactions);
-    localStorage.setItem(`kudos_rx_${kudos._id}`, JSON.stringify(nextMyReactions));
     setReactions(prev => ({ ...prev, [emoji]: Math.max(0, prev[emoji] + (isUndo ? -1 : 1)) }));
 
     if (!isUndo) {
@@ -582,13 +596,14 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         transition: 'filter 0.3s ease',
         perspective: 1000,
         transformStyle: 'preserve-3d',
+        borderRadius: '24px',
       }}
     >
       {/* Glassy rotating border laser */}
-      <div className={`kudos-card-glow-border ${VIBE_BORDER_CLASSES[kudos.category] || 'border-vibe-team'}`} />
+      <div className={`kudos-card-glow-border ${VIBE_BORDER_CLASSES[kudos.category] || 'border-vibe-team'}`} style={{ borderRadius: 'inherit' }} />
 
       {/* Main card body with true glassmorphism */}
-      <div className="kudos-card-inner" style={{ transformStyle: 'preserve-3d' }}>
+      <div className="kudos-card-inner" style={{ transformStyle: 'preserve-3d', borderRadius: 'calc(24px - 2px)' }}>
         {/* Confetti Burst */}
         {showConfetti && <ConfettiBurstMemo />}
 
@@ -862,15 +877,29 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
         {/* ── People row ── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16, transform: 'translateZ(18px)' }}>
           {/* To */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+            onClick={() => {
+              setSelectedUser(kudos.receiver);
+              setIsProfileModalOpen(true);
+            }}
+          >
             <AvatarMemo name={kudos.receiver} />
             <div>
               <div style={{ fontSize: '10px', color: '#666680', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>To</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#E0E0F0', lineHeight: 1 }}>{kudos.receiver}</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#E0E0F0', lineHeight: 1, cursor: 'pointer' }}>{kudos.receiver}</div>
             </div>
           </div>
           {/* From */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div 
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: kudos.isAnonymous ? 'default' : 'pointer' }}
+            onClick={() => {
+              if (!kudos.isAnonymous) {
+                setSelectedUser(kudos.sender);
+                setIsProfileModalOpen(true);
+              }
+            }}
+          >
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '10px', color: '#666680', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>From</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#E0E0F0', lineHeight: 1 }}>
@@ -1059,6 +1088,13 @@ export default function KudosCard({ kudos, index, isNew = false }: KudosCardProp
           </div>
         )}
       </div>
+      
+      {/* Profile Modal for clicked users */}
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        username={selectedUser} 
+      />
     </motion.div>
   );
 }

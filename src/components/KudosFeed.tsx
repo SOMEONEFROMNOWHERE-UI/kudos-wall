@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { useKudos } from '@/context/KudosContext';
 import KudosCard from './KudosCard';
 import GiveKudosModal from './GiveKudosModal';
@@ -16,7 +17,15 @@ import FriendsPanel from './FriendsPanel';
 import EchoInsight from './EchoInsight';
 import HallOfFame from './HallOfFame';
 import ProfileModal from './ProfileModal';
+import LeaderboardModal from './LeaderboardModal';
 import { Plus } from 'lucide-react';
+
+// Lazy-load GridScan — heavy WebGL bundle, never SSR
+const GridScan = dynamic(
+  () => import('./GridScan'),
+  { ssr: false, loading: () => null }
+);
+
 
 export default function KudosFeed() {
   const { kudosList, currentUser, live } = useKudos();
@@ -24,15 +33,49 @@ export default function KudosFeed() {
   const [isJarOpen, setIsJarOpen] = useState(false);
   const [isFriendsPanelOpen, setIsFriendsPanelOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
   const uniqueUsers = Array.from(new Set(live?.presenceUsers || []));
   const others = uniqueUsers.filter(u => u !== currentUser?.name);
   const hasOthersOnline = others.length >= 1;
 
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--surface-base)' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--surface-base)', position: 'relative' }}>
+      {/* GridScan WebGL background — fixed so it stays aligned on scroll */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+        aria-hidden="true"
+      >
+        <GridScan
+          sensitivity={0.3}
+          lineThickness={1.0}
+          linesColor="#2C2640"
+          gridScale={0.15}
+          scanColor="#9D72FF"
+          scanOpacity={0.25}
+          scanDirection="pingpong"
+          scanDuration={4.0}
+          scanDelay={2.5}
+          scanGlow={0.4}
+          scanSoftness={2.0}
+          scanPhaseTaper={0.8}
+          noiseIntensity={0.005}
+          lineJitter={0}
+          enablePost={true}
+          bloomIntensity={0.2}
+          chromaticAberration={0}
+          snapBackDelay={400}
+        />
+      </div>
+
       {/* Weekly spotlight overlay (Monday only) */}
       <WeeklySpotlight />
+
 
       {/* Navigation */}
       <Navbar
@@ -40,6 +83,7 @@ export default function KudosFeed() {
         onOpenComposer={() => setIsModalOpen(true)}
         onOpenFriends={() => setIsFriendsPanelOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
       />
 
       <ProfileModal
@@ -63,6 +107,8 @@ export default function KudosFeed() {
           gridTemplateColumns: kudosList.length > 0 ? '1fr 320px' : '1fr',
           gap: 'var(--space-5)',
           alignItems: 'start',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* ── Left: Feed ── */}
@@ -229,6 +275,7 @@ export default function KudosFeed() {
         onPayItForward={() => { setIsJarOpen(false); setIsModalOpen(true); }}
       />
       <FriendsPanel isOpen={isFriendsPanelOpen} onClose={() => setIsFriendsPanelOpen(false)} />
+      <LeaderboardModal isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
     </div>
   );
 }

@@ -6,32 +6,41 @@ import Kudos from '@/lib/models/Kudos';
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession();
-  if (!session?.user?.name) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  
+  const { searchParams } = new URL(req.url);
+  let name = searchParams.get('username');
+
+  if (!name) {
+    if (!session?.user?.name) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    name = session.user.name;
   }
 
   try {
     await dbConnect();
-    const name = session.user.name;
 
     // Fetch user details
-    const user = await User.findOne({ name }).lean();
+    const user = await User.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } }).lean();
+    const exactName = user?.name || name;
     
     // Compute stats
-    const kudosReceivedCount = await Kudos.countDocuments({ receiverName: name });
-    const kudosGivenCount = await Kudos.countDocuments({ senderName: name });
+    const kudosReceivedCount = await Kudos.countDocuments({ receiver: { $regex: new RegExp(`^${exactName}$`, 'i') } });
+    const kudosGivenCount = await Kudos.countDocuments({ sender: { $regex: new RegExp(`^${exactName}$`, 'i') } });
 
-    // Aggregate likes received
-    const likesAggregation = await Kudos.aggregate([
-      { $match: { receiverName: name } },
-      { $project: { likesCount: { $size: { $ifNull: ['$likes', []] } } } },
-      { $group: { _id: null, totalLikes: { $sum: '$likesCount' } } }
-    ]);
+    // Aggregate likes/reactions received
+    const kudosReceived = await Kudos.find({ receiver: { $regex: new RegExp(`^${exactName}$`, 'i') } }).lean();
+    let totalLikesReceived = 0;
     
-    const totalLikesReceived = likesAggregation.length > 0 ? likesAggregation[0].totalLikes : 0;
+    kudosReceived.forEach((k: any) => {
+      const reactions = k.reactions || {};
+      Object.values(reactions).forEach((arr: any) => {
+        totalLikesReceived += arr.length;
+      });
+    });
 
     return NextResponse.json({
-      name: user?.name || name,
+      name: exactName,
       streak: user?.streak || 0,
       bio: user?.bio || '',
       title: user?.title || '',

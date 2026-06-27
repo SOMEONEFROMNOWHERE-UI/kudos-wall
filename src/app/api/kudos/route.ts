@@ -97,6 +97,16 @@ export async function POST(request: Request) {
 
     const expiresAtVal = duration ? new Date(Date.now() + duration * 60 * 1000) : null;
 
+    // AI Moderation
+    const { moderateContent } = require('@/lib/moderation');
+    const moderationResult = await moderateContent(message);
+    if (moderationResult.verdict === 'fail') {
+      return NextResponse.json(
+        { error: moderationResult.reason || 'Message failed moderation check.' },
+        { status: 400 }
+      );
+    }
+
     if (!db) {
       const newKudos = {
         _id: uuidv4(),

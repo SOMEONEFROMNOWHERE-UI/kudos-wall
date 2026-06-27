@@ -10,13 +10,14 @@ interface NavbarProps {
   onOpenComposer: () => void;
   onOpenFriends?: () => void;
   onOpenProfile?: () => void;
+  onOpenLeaderboard?: () => void;
 }
 
 function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends, onOpenProfile }: NavbarProps) {
+export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends, onOpenProfile, onOpenLeaderboard }: NavbarProps) {
   const { currentUser, totalCount, logout, live } = useKudos();
   const [isAvatarHovered, setIsAvatarHovered] = useState(false);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
@@ -281,6 +282,20 @@ export default function Navbar({ onOpenJar, onOpenComposer, onOpenFriends, onOpe
               <div className="nav-btn-glow-border" />
               <Users size={14} style={{ position: 'relative', zIndex: 3 }} />
               <span style={{ position: 'relative', zIndex: 3 }}>Friends</span>
+            </button>
+          )}
+
+          {/* Leaderboard */}
+          {onOpenLeaderboard && (
+            <button
+              className="nav-btn-glassy"
+              onClick={onOpenLeaderboard}
+              aria-label="Leaderboard"
+              style={{ borderRadius: 9999, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <div className="nav-btn-glow-border" />
+              <span style={{ position: 'relative', zIndex: 3 }}>🏆</span>
+              <span className="desktop-only" style={{ position: 'relative', zIndex: 3 }}>Leaderboard</span>
             </button>
           )}
 

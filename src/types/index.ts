@@ -10,6 +10,7 @@ export interface KudosData {
   duration?: number;
   expiresAt?: string | null;
   badge?: string;
+  likes?: string[];
   createdAt?: string;
 }
 

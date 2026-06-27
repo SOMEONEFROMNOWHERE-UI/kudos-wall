@@ -8,6 +8,8 @@ export interface IKudos extends Document {
   isAnonymous: boolean;
   expiresAt?: Date | null;
   badge?: string;
+  likes?: string[];
+  reactions?: Record<string, string[]>;
   createdAt: Date;
 }
 
@@ -48,6 +50,15 @@ const KudosSchema = new Schema<IKudos>(
     badge: {
       type: String,
       default: 'GOOD_VIBES',
+    },
+    likes: {
+      type: [String],
+      default: [],
+    },
+    reactions: {
+      type: Map,
+      of: [String],
+      default: {},
     },
   },
   {

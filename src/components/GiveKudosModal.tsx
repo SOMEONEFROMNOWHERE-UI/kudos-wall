@@ -222,8 +222,10 @@ export default function GiveKudosModal({
       });
       setStep('success');
       setTimeout(() => onClose(), 1800);
-    } catch {
+    } catch (error: any) {
       setIsSubmitting(false);
+      setToastMessage(error.message || 'Failed to send kudos.');
+      setTimeout(() => setToastMessage(null), 3000);
     }
   };
 

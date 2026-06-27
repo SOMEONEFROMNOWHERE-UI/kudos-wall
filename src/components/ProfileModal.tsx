@@ -8,6 +8,7 @@ import { useKudos } from '@/context/KudosContext';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  username?: string;
 }
 
 interface UserProfile {
@@ -22,7 +23,7 @@ interface UserProfile {
   };
 }
 
-export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
+export default function ProfileModal({ isOpen, onClose, username }: ProfileModalProps) {
   const { currentUser } = useKudos();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,12 +43,13 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       setError('');
     }
     return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  }, [isOpen, username]);
 
   const fetchProfile = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/users/profile');
+      const query = username ? `?username=${encodeURIComponent(username)}` : '';
+      const res = await fetch(`/api/users/profile${query}`);
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
@@ -261,7 +263,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                     justifyContent: 'center',
                     overflow: 'hidden',
                   }}>
-                    {currentUser?.image ? (
+                    {(!username || username === currentUser?.name) && currentUser?.image ? (
                       <img
                         src={currentUser.image}
                         alt={currentUser.name}
@@ -283,7 +285,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         fontWeight: 700,
                         color: 'var(--accent)',
                       }}>
-                        {getInitials(currentUser?.name || 'U')}
+                        {getInitials(profile?.name || username || 'U')}
                       </div>
                     )}
                   </div>
@@ -353,7 +355,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         )}
                       </div>
 
-                      {!isEditing && (
+                      {!isEditing && (!username || username === currentUser?.name) && (
                         <button
                           onClick={() => setIsEditing(true)}
                           style={{

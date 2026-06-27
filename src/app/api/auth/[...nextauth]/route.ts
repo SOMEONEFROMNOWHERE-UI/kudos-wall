@@ -15,9 +15,26 @@ const handler = NextAuth({
       if (!user.email || !user.name) return false;
       
       try {
-        await dbConnect();
+        const db = await dbConnect();
         
-        // Find or create user
+        if (!db) {
+          // Use in-memory database
+          const { memoryDb } = require('@/lib/mongodb');
+          const { v4: uuidv4 } = require('uuid');
+          let existingUser = memoryDb.users.find((u: any) => u.name === user.name);
+          if (!existingUser) {
+            memoryDb.users.push({
+              _id: uuidv4(),
+              name: user.name,
+              streak: 0,
+              lastKudosGiven: null,
+              createdAt: new Date().toISOString()
+            });
+          }
+          return true;
+        }
+
+        // Find or create user in MongoDB
         const existingUser = await User.findOne({ name: user.name });
         
         if (!existingUser) {

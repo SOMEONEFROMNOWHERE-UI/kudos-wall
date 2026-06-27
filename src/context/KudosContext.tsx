@@ -21,6 +21,7 @@ interface KudosContextType {
   addKudos: (kudos: Omit<KudosData, '_id' | 'createdAt'>) => Promise<void>;
   updateKudos: (id: string, message: string) => Promise<void>;
   deleteKudos: (id: string) => Promise<void>;
+  toggleLike: (id: string) => Promise<void>;
   refreshKudos: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -224,8 +225,20 @@ export const KudosProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const toggleLike = async (id: string) => {
+    if (!currentUser) throw new Error('Must be logged in to like');
+    const res = await fetch(`/api/kudos/${id}/like`, { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      setKudosList(prev => prev.map(k => k._id === id ? { ...k, likes: data.likes } : k));
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to toggle like');
+    }
+  };
+
   return (
-    <KudosContext.Provider value={{ currentUser, kudosList, totalCount, isLoading, live, login, logout, addKudos, updateKudos, deleteKudos, refreshKudos, refreshUser }}>
+    <KudosContext.Provider value={{ currentUser, kudosList, totalCount, isLoading, live, login, logout, addKudos, updateKudos, deleteKudos, toggleLike, refreshKudos, refreshUser }}>
       {children}
     </KudosContext.Provider>
   );
