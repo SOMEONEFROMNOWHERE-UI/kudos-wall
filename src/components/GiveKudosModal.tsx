@@ -140,31 +140,20 @@ export default function GiveKudosModal({
   const handleEnhance = async () => {
     if (isEnhancing || message.trim().length < 5) return;
     setIsEnhancing(true);
+    setSentimentWarning(null); // Clear any previous warning
     const rawKudosText = message;
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/enhance-kudos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: "You are a hype writer for a team recognition platform. Rewrite the user's raw kudos message into something punchy, warm, and specific. Keep it under 2 sentences. Use the same language/tone as the input. Never add fake details. Return ONLY the rewritten message, no quotes, no explanation.",
-          messages: [{ role: "user", content: rawKudosText }]
-        })
+        body: JSON.stringify({ message: rawKudosText })
       });
       if (!response.ok) {
         throw new Error("API request failed");
       }
       const data = await response.json();
-      if (data && data.content && data.content[0] && data.content[0].text) {
-        let enhanced = data.content[0].text.trim();
-        // Remove leading and trailing quotes if present
-        if (enhanced.startsWith('"') && enhanced.endsWith('"')) {
-          enhanced = enhanced.slice(1, -1);
-        } else if (enhanced.startsWith("'") && enhanced.endsWith("'")) {
-          enhanced = enhanced.slice(1, -1);
-        }
-        setMessage(enhanced);
+      if (data && data.enhanced) {
+        setMessage(data.enhanced);
         setIsEnhanced(true);
       } else {
         throw new Error("Invalid response format");
